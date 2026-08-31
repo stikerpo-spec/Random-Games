@@ -1,70 +1,35 @@
 <!doctype html>
 <html lang="de">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#070b17" />
-  <meta name="description" content="Random Games – kostenlose Browser-Spiele, direkt spielbar." />
-  <title>Random Games – Browser Arcade</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#070b17"><meta name="description" content="Random Games – kostenlose Browser-Arcade mit vielen direkt spielbaren Games."><title>Random Games – Browser Arcade</title><link rel="stylesheet" href="styles.css"></head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="#home" aria-label="Random Games Startseite">
-      <span class="brand-mark">RG</span>
-      <span><b>Random</b> Games</span>
-    </a>
-    <div class="top-actions">
-      <button class="icon-btn" id="soundBtn" title="Sound umschalten">🔊</button>
-      <button class="icon-btn" id="themeBtn" title="Darstellung umschalten">☾</button>
-    </div>
-  </header>
-
-  <main>
-    <section id="home" class="hero">
-      <div class="hero-copy">
-        <span class="eyebrow">BROWSER ARCADE</span>
-        <h1>Spielen. Sofort.<br><span>Ohne Download.</span></h1>
-        <p>Eine große Sammlung schneller, eigener Browser-Spiele. Öffnen, starten und loslegen.</p>
-        <div class="hero-actions">
-          <button class="primary" id="randomBtn">🎲 Zufälliges Spiel</button>
-          <button class="secondary" id="featuredBtn">⭐ Highlights</button>
-        </div>
-      </div>
-      <div class="hero-orbit" aria-hidden="true">
-        <div class="orbit-card c1">🏃</div><div class="orbit-card c2">🧱</div><div class="orbit-card c3">🚀</div>
-        <div class="orbit-card c4">🐍</div><div class="orbit-card c5">🎯</div>
-        <div class="orbit-core">RG<br><small>PLAY</small></div>
-      </div>
-    </section>
-
-    <section class="toolbar" aria-label="Spiele filtern">
-      <div class="search-wrap"><span>⌕</span><input id="search" placeholder="Spiele suchen…" autocomplete="off" /></div>
-      <div class="chips" id="chips">
-        <button class="chip active" data-cat="Alle">Alle</button>
-        <button class="chip" data-cat="Arcade">Arcade</button>
-        <button class="chip" data-cat="Puzzle">Puzzle</button>
-        <button class="chip" data-cat="Action">Action</button>
-        <button class="chip" data-cat="Sport">Sport</button>
-        <button class="chip" data-cat="Casual">Casual</button>
-      </div>
-    </section>
-
-    <section class="section-head"><div><span class="eyebrow">COLLECTION</span><h2>Alle Spiele</h2></div><span id="countLabel" class="muted"></span></section>
-    <section id="gameGrid" class="game-grid"></section>
-  </main>
-
-  <div class="modal" id="gameModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close="1"></div>
-    <section class="game-modal" role="dialog" aria-modal="true" aria-labelledby="gameTitle">
-      <div class="game-head"><div><div class="eyebrow" id="gameCat">ARCADE</div><h2 id="gameTitle">Spiel</h2></div><button class="close-btn" id="closeGame">✕</button></div>
-      <div class="game-meta"><span id="gameDesc"></span><span id="gameHigh"></span></div>
-      <div class="game-stage"><div id="gameMount"></div></div>
-      <div class="control-hint" id="controlHint"></div>
-    </section>
-  </div>
-
-  <footer><span>Random Games</span><span>Eigene Browser-Games · Lokal spielbar · Kein Download</span></footer>
-  <script src="games.js"></script>
-</body>
-</html>
+<header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">RG</span><span><b>Random</b> Games</span></a><div class="top-actions"><button class="icon-btn" id="themeBtn">☾</button></div></header>
+<main>
+<section class="hero"><div class="hero-copy"><span class="eyebrow">BROWSER ARCADE</span><h1>Spielen. Sofort.<br><span>Ohne Download.</span></h1><p>Viele eigene Arcade-, Puzzle-, Sport- und Action-Spiele. Jedes Spiel läuft direkt im Browser.</p><div class="hero-actions"><a class="primary" href="#games">🎮 Spiele öffnen</a><a class="secondary" href="play.html?game=street">⭐ Street Rush</a></div></div><div class="hero-orbit"><div class="orbit-card c1">🏃</div><div class="orbit-card c2">🧱</div><div class="orbit-card c3">🚀</div><div class="orbit-card c4">🐍</div><div class="orbit-card c5">🎯</div><div class="orbit-core">RG<br><small>PLAY</small></div></div></section>
+<section class="toolbar" id="games"><div class="search-wrap"><span>⌕</span><input id="search" placeholder="Spiele suchen…" autocomplete="off"></div><div class="chips" id="chips"><button class="chip active" data-cat="Alle">Alle</button><button class="chip" data-cat="Arcade">Arcade</button><button class="chip" data-cat="Puzzle">Puzzle</button><button class="chip" data-cat="Action">Action</button><button class="chip" data-cat="Sport">Sport</button><button class="chip" data-cat="Casual">Casual</button></div></section>
+<section class="section-head"><div><span class="eyebrow">COLLECTION</span><h2>Alle Spiele</h2></div><span id="countLabel" class="muted"></span></section>
+<section id="gameGrid" class="game-grid">
+<a class="game-card" data-cat="Action" data-name="Street Rush" href="play.html?game=street"><div class="game-art">🏃</div><span class="pill">Action</span><div class="game-info"><h3>Street Rush</h3><p>Endless Runner mit Spurwechsel, Sprung, Ducken und Sammelobjekten.</p></div></a>
+<a class="game-card" data-cat="Puzzle" data-name="Blast Maker" href="play.html?game=blast"><div class="game-art">🧱</div><span class="pill">Puzzle</span><div class="game-info"><h3>Blast Maker</h3><p>Block-Puzzle mit Reihen, Spalten, Combos und steigender Schwierigkeit.</p></div></a>
+<a class="game-card" data-cat="Casual" data-name="Stack Up" href="play.html?game=stack"><div class="game-art">🏗️</div><span class="pill">Casual</span><div class="game-info"><h3>Stack Up</h3><p>Baue deinen Turm so hoch wie möglich.</p></div></a>
+<a class="game-card" data-cat="Arcade" data-name="Snake Arena" href="play.html?game=snake"><div class="game-art">🐍</div><span class="pill">Arcade</span><div class="game-info"><h3>Snake Arena</h3><p>Klassisches Snake mit Essen, Länge und Highscore.</p></div></a>
+<a class="game-card" data-cat="Arcade" data-name="Sky Flap" href="play.html?game=flap"><div class="game-art">🐦</div><span class="pill">Arcade</span><div class="game-info"><h3>Sky Flap</h3><p>Fliege durch wechselnde Tore.</p></div></a>
+<a class="game-card" data-cat="Arcade" data-name="Brick Breaker" href="play.html?game=breakout"><div class="game-art">🔴</div><span class="pill">Arcade</span><div class="game-info"><h3>Brick Breaker</h3><p>Ziegel zerstören, Power-Ups sammeln, Runde schaffen.</p></div></a>
+<a class="game-card" data-cat="Action" data-name="Astro Drift" href="play.html?game=asteroids"><div class="game-art">🚀</div><span class="pill">Action</span><div class="game-info"><h3>Astro Drift</h3><p>Weltraum-Arcade mit Bewegung, Schüssen und Wellen.</p></div></a>
+<a class="game-card" data-cat="Puzzle" data-name="Memory Grid" href="play.html?game=memory"><div class="game-art">🧠</div><span class="pill">Puzzle</span><div class="game-info"><h3>Memory Grid</h3><p>Finde alle Paare mit möglichst wenigen Zügen.</p></div></a>
+<a class="game-card" data-cat="Puzzle" data-name="Neon Tiles" href="play.html?game=2048"><div class="game-art">🔢</div><span class="pill">Puzzle</span><div class="game-info"><h3>Neon Tiles</h3><p>Zahlen schieben und kombinieren.</p></div></a>
+<a class="game-card" data-cat="Action" data-name="Aim Dash" href="play.html?game=aim"><div class="game-art">🎯</div><span class="pill">Action</span><div class="game-info"><h3>Aim Dash</h3><p>30 Sekunden, so viele Ziele wie möglich.</p></div></a>
+<a class="game-card" data-cat="Sport" data-name="Goal Rush" href="play.html?game=goal"><div class="game-art">⚽</div><span class="pill">Sport</span><div class="game-info"><h3>Goal Rush</h3><p>Ziele treffen und eine Serie aufbauen.</p></div></a>
+<a class="game-card" data-cat="Arcade" data-name="Fruit Slice" href="play.html?game=fruit"><div class="game-art">🍉</div><span class="pill">Arcade</span><div class="game-info"><h3>Fruit Slice</h3><p>Früchte durch Wischbewegungen treffen.</p></div></a>
+<a class="game-card" data-cat="Action" data-name="Laser Dodge" href="play.html?game=dodge"><div class="game-art">⚡</div><span class="pill">Action</span><div class="game-info"><h3>Laser Dodge</h3><p>Überlebe fallende Hindernisse.</p></div></a>
+<a class="game-card" data-cat="Casual" data-name="Reaction Rush" href="play.html?game=reaction"><div class="game-art">🟢</div><span class="pill">Casual</span><div class="game-info"><h3>Reaction Rush</h3><p>Reagiere genau im richtigen Moment.</p></div></a>
+<a class="game-card" data-cat="Sport" data-name="Pocket Pong" href="play.html?game=pong"><div class="game-art">🏓</div><span class="pill">Sport</span><div class="game-info"><h3>Pocket Pong</h3><p>Paddle-Duell bis 5 Punkte.</p></div></a>
+<a class="game-card" data-cat="Puzzle" data-name="Grid Clash" href="play.html?game=ttt"><div class="game-art">⭕</div><span class="pill">Puzzle</span><div class="game-info"><h3>Grid Clash</h3><p>Drei gewinnt gegen die Computer-KI.</p></div></a>
+<a class="game-card" data-cat="Puzzle" data-name="Mine Sweep" href="play.html?game=mines"><div class="game-art">💣</div><span class="pill">Puzzle</span><div class="game-info"><h3>Mine Sweep</h3><p>Felder öffnen und Gefahren vermeiden.</p></div></a>
+<a class="game-card" data-cat="Casual" data-name="Color Echo" href="play.html?game=simon"><div class="game-art">🎵</div><span class="pill">Casual</span><div class="game-info"><h3>Color Echo</h3><p>Merke dir eine immer längere Farbreihe.</p></div></a>
+<a class="game-card" data-cat="Arcade" data-name="Target Pop" href="play.html?game=whack"><div class="game-art">🔨</div><span class="pill">Arcade</span><div class="game-info"><h3>Target Pop</h3><p>Treffe Ziele, bevor sie verschwinden.</p></div></a>
+<a class="game-card" data-cat="Casual" data-name="Coin Clicker" href="play.html?game=clicker"><div class="game-art">🪙</div><span class="pill">Casual</span><div class="game-info"><h3>Coin Clicker</h3><p>Sammle Coins und kaufe Upgrades.</p></div></a>
+<a class="game-card" data-cat="Sport" data-name="Turbo Circuit" href="play.html?game=racer"><div class="game-art">🏎️</div><span class="pill">Sport</span><div class="game-info"><h3>Turbo Circuit</h3><p>Arcade-Rennen auf einer schnellen Strecke.</p></div></a>
+</section></main>
+<footer><span>Random Games</span><span>Eigene Browser-Games · Direkt im Browser · Kein Download</span></footer>
+<script>(()=>{const cards=[...document.querySelectorAll('.game-card')],q=document.querySelector('#search'),label=document.querySelector('#countLabel'),chips=[...document.querySelectorAll('.chip')];function render(){const term=q.value.trim().toLowerCase(),active=document.querySelector('.chip.active')?.dataset.cat||'Alle';let n=0;cards.forEach(c=>{const okCat=active==='Alle'||c.dataset.cat===active;const okQ=!term||c.dataset.name.toLowerCase().includes(term);c.style.display=okCat&&okQ?'':'none';if(okCat&&okQ)n++});label.textContent=n+' Spiele'}q.addEventListener('input',render);chips.forEach(b=>b.addEventListener('click',()=>{chips.forEach(x=>x.classList.remove('active'));b.classList.add('active');render()}));document.querySelector('#themeBtn')?.addEventListener('click',()=>document.body.classList.toggle('light'));render()})()</script>
+</body></html>
