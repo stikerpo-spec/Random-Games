@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#070b17" />
+  <meta name="description" content="Random Games – kostenlose Browser-Spiele, direkt spielbar." />
+  <title>Random Games – Browser Arcade</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#home" aria-label="Random Games Startseite">
+      <span class="brand-mark">RG</span>
+      <span><b>Random</b> Games</span>
+    </a>
+    <div class="top-actions">
+      <button class="icon-btn" id="soundBtn" title="Sound umschalten">🔊</button>
+      <button class="icon-btn" id="themeBtn" title="Darstellung umschalten">☾</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="home" class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">BROWSER ARCADE</span>
+        <h1>Spielen. Sofort.<br><span>Ohne Download.</span></h1>
+        <p>Eine große Sammlung schneller, eigener Browser-Spiele. Öffnen, starten und loslegen.</p>
+        <div class="hero-actions">
+          <button class="primary" id="randomBtn">🎲 Zufälliges Spiel</button>
+          <button class="secondary" id="featuredBtn">⭐ Highlights</button>
+        </div>
+      </div>
+      <div class="hero-orbit" aria-hidden="true">
+        <div class="orbit-card c1">🏃</div><div class="orbit-card c2">🧱</div><div class="orbit-card c3">🚀</div>
+        <div class="orbit-card c4">🐍</div><div class="orbit-card c5">🎯</div>
+        <div class="orbit-core">RG<br><small>PLAY</small></div>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Spiele filtern">
+      <div class="search-wrap"><span>⌕</span><input id="search" placeholder="Spiele suchen…" autocomplete="off" /></div>
+      <div class="chips" id="chips">
+        <button class="chip active" data-cat="Alle">Alle</button>
+        <button class="chip" data-cat="Arcade">Arcade</button>
+        <button class="chip" data-cat="Puzzle">Puzzle</button>
+        <button class="chip" data-cat="Action">Action</button>
+        <button class="chip" data-cat="Sport">Sport</button>
+        <button class="chip" data-cat="Casual">Casual</button>
+      </div>
+    </section>
+
+    <section class="section-head"><div><span class="eyebrow">COLLECTION</span><h2>Alle Spiele</h2></div><span id="countLabel" class="muted"></span></section>
+    <section id="gameGrid" class="game-grid"></section>
+  </main>
+
+  <div class="modal" id="gameModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close="1"></div>
+    <section class="game-modal" role="dialog" aria-modal="true" aria-labelledby="gameTitle">
+      <div class="game-head"><div><div class="eyebrow" id="gameCat">ARCADE</div><h2 id="gameTitle">Spiel</h2></div><button class="close-btn" id="closeGame">✕</button></div>
+      <div class="game-meta"><span id="gameDesc"></span><span id="gameHigh"></span></div>
+      <div class="game-stage"><div id="gameMount"></div></div>
+      <div class="control-hint" id="controlHint"></div>
+    </section>
+  </div>
+
+  <footer><span>Random Games</span><span>Eigene Browser-Games · Lokal spielbar · Kein Download</span></footer>
+  <script src="games.js"></script>
+</body>
+</html>
