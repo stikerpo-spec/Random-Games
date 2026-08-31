@@ -23,7 +23,8 @@
 const fullBtn=document.getElementById('fullBtn');
 async function toggleFullscreen(){try{if(!document.fullscreenElement){await document.documentElement.requestFullscreen()}else{await document.exitFullscreen()}}catch{}}
 document.addEventListener('fullscreenchange',()=>{const on=!!document.fullscreenElement;document.body.classList.toggle('is-fullscreen',on);fullBtn.textContent=on?'✕ Fenster':'⛶ Vollbild'});fullBtn.addEventListener('click',toggleFullscreen);
+const game=new URLSearchParams(location.search).get('game')||'';
+document.write(game==='street'?'<script src="street-pro.js"><\/script>':'<script src="play.js"><\/script>');
 </script>
-<script src="play.js"></script>
 </body>
 </html>
