@@ -20,8 +20,12 @@ function makeTextSprite(text,tint){
   const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
   const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false}));sprite.scale.set(1.75,.39,1);return sprite;
 }
-function makeFighter(classId,hex,skinId="standard",withLabel=true){
-  const tint=color(hex||DEFAULT_COLORS[0]),main=standard(tint,.62,.27,.38),mainDark=standard("#172b3a",.72,.31,.12),silver=standard("#9fb5c2",.82,.24,.12),dark=standard("#07111b",.46,.4,.04);
+function makeFighter(classId,hex,skinSpec="standard",withLabel=true){
+  const spec=skinSpec&&typeof skinSpec==="object"?skinSpec:{id:skinSpec||"standard",color:hex};
+  const skinId=String(spec.id||"standard"),skinStyle=spec.style||"vanguard";
+  const defaultAccents={standard:"#ad91ff",acid:"#e5ff9a",rose:"#ffc1dc",violet:"#d9c4ff",solar:"#ffe1a1",ice:"#e7fbff",storm:"#e3f6ff",ember:"#ffcf9e",phantom:"#b7a1ff",tide:"#a8fff5"};
+  const baseColor=spec.color||hex||DEFAULT_COLORS[0],accentColor=spec.accent||defaultAccents[skinId]||"#f7fbff";
+  const tint=color(baseColor),main=standard(tint,.62,.27,.38),mainDark=standard("#172b3a",.72,.31,.12),silver=standard("#9fb5c2",.82,.24,.12),dark=standard("#07111b",.46,.4,.04);
   const bright=new THREE.MeshStandardMaterial({color:tint,metalness:.25,roughness:.2,emissive:tint,emissiveIntensity:1.25});
   const root=new THREE.Group(),body=new THREE.Group();root.add(body);
   const torso=add(body,new THREE.CylinderGeometry(.34,.47,.93,8,1),main,0,1.28,0);torso.rotation.y=Math.PI/8;
@@ -63,7 +67,7 @@ function makeFighter(classId,hex,skinId="standard",withLabel=true){
   }else if(classId==="striker"){
     add(extras,new THREE.BoxGeometry(.24,.18,.26),silver,.63,1.05,.02);add(extras,new THREE.TorusGeometry(.19,.035,7,20),bright,.68,1.08,.1).rotation.x=Math.PI/2;add(extras,new THREE.BoxGeometry(.16,.34,.15),mainDark,-.58,1.57,-.04);
   }
-  const skinAccent=standard(skinId==="solar"?"#ffe1a1":skinId==="ice"?"#e7fbff":skinId==="ember"?"#ffcf9e":skinId==="phantom"?"#27263f":skinId==="acid"?"#e5ff9a":skinId==="rose"?"#ffc1dc":skinId==="storm"?"#e3f6ff":skinId==="tide"?"#a8fff5":hex||"#53eedc",.64,.23,.62);
+  const skinAccent=standard(skinId==="phantom"&&!spec.accent?"#b7a1ff":accentColor,.64,.23,.62);
   const skinDark=standard(skinId==="phantom"?"#15162c":"#152a38",.78,.28,.22);
   if(skinId==="acid"){
     [-1,1].forEach(side=>{const horn=add(extras,new THREE.ConeGeometry(.12,.48,6),skinAccent,side*.23,2.48,-.06);horn.rotation.z=side*-.22;});
@@ -96,6 +100,23 @@ function makeFighter(classId,hex,skinId="standard",withLabel=true){
     const visor=add(extras,new THREE.BoxGeometry(.52,.11,.06),skinAccent,0,2.1,.34);
     add(extras,new THREE.TorusGeometry(.36,.035,7,28),skinAccent,0,2.38,-.06);
   }
+  else if(skinId==="custom_preview"||skinId.startsWith("custom_")){
+    if(skinStyle==="runner"){
+      [-1,1].forEach(side=>{const fin=add(extras,new THREE.ConeGeometry(.22,.92,5),skinAccent,side*.48,1.5,-.5);fin.rotation.z=side*-.6;fin.rotation.x=-.45;});
+      [-1,1].forEach(side=>{const jet=add(extras,new THREE.CylinderGeometry(.09,.17,.32,8),skinAccent,side*.22,1.02,-.64);jet.rotation.x=Math.PI/2;});
+    }else if(skinStyle==="tech"){
+      for(let i=0;i<2;i++){const d=new THREE.Group();add(d,new THREE.OctahedronGeometry(.2,1),skinAccent,0,0,0);add(d,new THREE.TorusGeometry(.24,.03,7,22),bright,0,0,0).rotation.x=Math.PI/2;extras.add(d);drones.push(d);d.userData.side=i===0?-1:1;}
+      add(extras,new THREE.BoxGeometry(.72,.26,.4),skinAccent,0,1.78,-.32);
+    }else if(skinStyle==="shadow"){
+      const hood=add(extras,new THREE.SphereGeometry(.43,12,10,0,Math.PI*2,0,Math.PI*.62),skinDark,0,2.12,-.07);hood.scale.set(1.05,1.1,1.05);
+      [-1,1].forEach(side=>{const cape=add(extras,new THREE.ConeGeometry(.36,1,5),skinDark,side*.3,1.18,-.52);cape.rotation.x=Math.PI/2;cape.rotation.z=side*.2;});
+      const halo=add(extras,new THREE.TorusGeometry(.47,.04,7,28),skinAccent,0,2.49,-.06);halo.rotation.x=.35;
+    }else{
+      [-1,1].forEach(side=>{const pauldron=add(extras,new THREE.IcosahedronGeometry(.3,1),skinAccent,side*.55,1.65,-.03);pauldron.scale.set(1,.7,1.15);});
+      add(extras,new THREE.BoxGeometry(.72,.24,.11),skinAccent,0,1.42,.39);
+      const crest=add(extras,new THREE.ConeGeometry(.12,.52,6),skinAccent,0,2.48,-.05);crest.rotation.z=.03;
+    }
+  }
   const groundRing=add(root,new THREE.TorusGeometry(.56,.035,8,36),bright,0,.075,0);groundRing.rotation.x=-Math.PI/2;
   const teamRing=add(root,new THREE.TorusGeometry(.7,.018,6,36),glowMaterial("#53eedc"),0,.045,0);teamRing.rotation.x=-Math.PI/2;
   const ultimateRing=add(root,new THREE.TorusGeometry(.83,.045,8,40),glowMaterial("#ad91ff"),0,.1,0);ultimateRing.rotation.x=-Math.PI/2;
@@ -107,7 +128,7 @@ function makeFighter(classId,hex,skinId="standard",withLabel=true){
   add(barGroup,new THREE.PlaneGeometry(1.2,.11),new THREE.MeshBasicMaterial({color:"#07111b",side:THREE.DoubleSide}),0,0,0);
   const barFill=add(barGroup,new THREE.PlaneGeometry(1.08,.055),new THREE.MeshBasicMaterial({color:"#c5ff67",side:THREE.DoubleSide}),0,0,.008);
   const label=withLabel?makeTextSprite("FIGHTER",hex||"#53eedc"):null;if(label){label.position.set(0,3.2,0);root.add(label);}
-  return {root,body,leftArm,rightArm,leftLeg,rightLeg,shield,ultimateRing,boostRing,respawnRing,teamRing,barGroup,barFill,label,drones,lastX:null,lastZ:null,phase:Math.random()*6,tint,groundRing,classId,skinId,colorHex:hex||DEFAULT_COLORS[0]};
+  return {root,body,leftArm,rightArm,leftLeg,rightLeg,shield,ultimateRing,boostRing,respawnRing,teamRing,barGroup,barFill,label,drones,lastX:null,lastZ:null,phase:Math.random()*6,tint,groundRing,classId,skinId,skinStyle,colorHex:baseColor};
 }
 function disposeTree(obj){if(!obj)return;obj.traverse(n=>{if(n.geometry)n.geometry.dispose();if(n.material){const mats=Array.isArray(n.material)?n.material:[n.material];mats.forEach(m=>{if(m.map)m.map.dispose();m.dispose();});}});}
 function makeBlock(parent,x,y,w,d,tint){
@@ -182,7 +203,7 @@ function createArena(canvas){
       const people=Object.values(state.players||{}),alive=new Set(people.map(p=>p.id));
       for(const [id,r] of fighters){if(!alive.has(id)){world.remove(r.root);disposeTree(r.root);fighters.delete(id);}}
       people.forEach((p)=>{
-        let r=fighters.get(p.id);if(r&&(r.classId!==(p.classId||"striker")||r.skinId!==(p.skinId||"standard")||r.colorHex!==(p.color||DEFAULT_COLORS[0]))){world.remove(r.root);disposeTree(r.root);fighters.delete(p.id);r=null;}if(!r){r=makeFighter(p.classId||"striker",p.color,p.skinId||"standard",true);world.add(r.root);fighters.set(p.id,r);}
+        let r=fighters.get(p.id);if(r&&(r.classId!==(p.classId||"striker")||r.skinId!==(p.skinId||"standard")||r.colorHex!==(p.color||DEFAULT_COLORS[0]))){world.remove(r.root);disposeTree(r.root);fighters.delete(p.id);r=null;}if(!r){r=makeFighter(p.classId||"striker",p.color,p.skinData||p.skinId||"standard",true);world.add(r.root);fighters.set(p.id,r);}
         if(p.disconnected){r.root.visible=false;return;}
         const x=(p.x-600)/50,z=(p.y-380)/50,dx=r.lastX===null?0:p.x-r.lastX,dz=r.lastZ===null?0:p.y-r.lastZ,walk=clamp(Math.hypot(dx,dz)/4.2,0,1);
         r.lastX=p.x;r.lastZ=p.y;r.root.visible=true;r.body.visible=p.hp>0&&p.respawn<=0;
