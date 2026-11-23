@@ -152,10 +152,10 @@
         <div class="class-area">
           <div class="eyebrow">SELECT YOUR CLASS</div><h2>FOUR WAYS TO PLAY.</h2>
           <div class="class-grid" id="classGrid">
-            <button class="class-card selected" data-class="striker"><span>✦</span><b>STRIKER</b><small>Balanced and agile. A strong all-rounder.</small><i>SPD 78 · EN 72</i></button>
-            <button class="class-card" data-class="guardian"><span>⬡</span><b>GUARDIAN</b><small>Extra resilience and a sturdier shield.</small><i>HP 130 · SPD 55</i></button>
-            <button class="class-card" data-class="runner"><span>➤</span><b>RUNNER</b><small>Move quickly and reposition in a flash.</small><i>SPD 105 · HP 85</i></button>
-            <button class="class-card" data-class="technician"><span>⌘</span><b>TECHNICIAN</b><small>Energy efficiency and faster recovery.</small><i>EN 120 · REGEN +</i></button>
+            <button class="class-card selected" data-class="striker"><span>✦</span><b>STRIKER</b><small>Balanced and agile. Ultimate: Plasma Rush boosts your fire rate.</small><i>SPD 78 · EN 72</i></button>
+            <button class="class-card" data-class="guardian"><span>⬡</span><b>GUARDIAN</b><small>Extra resilience. Ultimate: Fortress restores health and shields.</small><i>HP 130 · SPD 55</i></button>
+            <button class="class-card" data-class="runner"><span>➤</span><b>RUNNER</b><small>Fast repositioning. Ultimate: Overdrive boosts your speed.</small><i>SPD 105 · HP 85</i></button>
+            <button class="class-card" data-class="technician"><span>⌘</span><b>TECHNICIAN</b><small>Fast energy recovery. Ultimate: Nova Burst fires in every direction.</small><i>EN 120 · REGEN +</i></button>
           </div>
           <div class="card-panel cosmetic-panel">
             <div class="eyebrow">EQUIPPED COSMETIC</div><h3>VISUAL IDENTITY</h3>
@@ -257,13 +257,13 @@
       <div class="arena-stage">
         <canvas id="arenaCanvas" width="1200" height="760" aria-label="Neon-Arena"></canvas>
         <div class="game-overlay hidden" id="gameEndOverlay"><div class="end-card"><div class="eyebrow">MATCH COMPLETE</div><h2 id="endTitle">VICTORY</h2><p id="endMessage">Well played.</p><div class="end-rewards" id="endRewards"></div><div class="end-actions"><button class="btn btn-primary" id="rematchButton">REMATCH ↻</button><button class="btn btn-outline" id="endToMenu">BACK TO BASE</button></div></div></div>
-        <div class="touch-controls" id="touchControls"><div class="touch-pad"><button data-key="w">▲</button><button data-key="a">◀</button><button data-key="s">▼</button><button data-key="d">▶</button></div><div class="touch-actions"><button data-key=" " class="dash-touch">DASH</button><button data-key="e">SHIELD</button><button data-key="j" class="pulse-touch">PULSE</button></div></div>
+        <div class="touch-controls" id="touchControls"><div class="touch-pad"><button data-key="w">▲</button><button data-key="a">◀</button><button data-key="s">▼</button><button data-key="d">▶</button></div><div class="touch-actions"><button data-key=" " class="dash-touch">DASH</button><button data-key="e">SHIELD</button><button data-key="j" class="pulse-touch">PULSE</button><button data-key="q" class="ultimate-touch">ULT</button></div></div>
       </div>
       <aside class="game-sidebar">
         <div class="sidebar-panel"><div class="sidebar-label">LIVE SCOREBOARD</div><div id="scoreboard" class="scoreboard"></div></div>
         <div class="sidebar-panel"><div class="sidebar-label">FIGHTER STATUS</div><div id="fighterStatus" class="fighter-status"></div></div>
         <div class="sidebar-panel"><div class="sidebar-label">ARENA FEED</div><div id="arenaFeed" class="arena-feed"></div></div>
-        <div class="game-controls"><b>WASD</b> MOVE<br><b>J / CLICK</b> PULSE<br><b>SPACE</b> DASH · <b>E</b> SHIELD</div>
+        <div class="game-controls"><b>WASD</b> MOVE<br><b>J / CLICK</b> PULSE<br><b>SPACE</b> DASH · <b>E</b> SHIELD · <b>Q</b> ULTIMATE</div>
       </aside>
     </div>
   </section>
