@@ -961,6 +961,7 @@ canvas.addEventListener("pointerdown",e=>{
 });
 canvas.addEventListener("pointerup",()=>pointerDown=false);
 canvas.addEventListener("pointercancel",()=>pointerDown=false);
+canvas.parentElement.addEventListener("wheel",e=>{if(arena3d&&$("gameScreen").classList.contains("open")){e.preventDefault();arena3d.zoom(e.deltaY);}}, {passive:false});
 document.addEventListener("pointerlockchange",()=>{
   if(!$("gameScreen").classList.contains("open")||!game)return;
   const locked=!!(arena3d&&arena3d.isPointerLocked());
