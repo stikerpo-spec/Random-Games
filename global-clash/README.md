@@ -11,7 +11,7 @@ A neon-styled, fictional, non-graphic browser arena game inside the Random Games
 
 ### Arena modes
 - **Training Lab** — solo practice against a bot.
-- **Survival** — survive escalating bot waves.
+- **Tournament Circuit** — beat three solo challengers in sequence.\n- **Survival** — survive escalating bot waves.
 - **Duel** — private online 1v1.
 - **Team Clash** — private online team match, two teams.
 - **Free For All** — private online match for up to four players.
