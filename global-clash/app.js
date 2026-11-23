@@ -324,7 +324,7 @@ function joinRoom(){
       if(message.type==="welcome"){
         myId=message.id;roomCode=message.roomCode;lobbyPlayers=message.players||[];
         selectedMode=message.mode||selectedMode;selectedMap=message.map||selectedMap;
-        $("roomModeSummary").textContent=MODES[selectedMode].name.toUpperCase()+" · "+MAPS[selectedMap].name.toUpperCase();
+        $("lobbyModeSummary").textContent=MODES[selectedMode].name.toUpperCase()+" · "+MAPS[selectedMap].name.toUpperCase();
         $("roomState").classList.remove("hidden");$("roomCode").textContent=roomCode;setLobbyError("");renderRoster();
       }else if(message.type==="roster"){lobbyPlayers=message.players||[];renderRoster();}
       else if(message.type==="error"){setLobbyError(message.message||"Join failed.");}
