@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 const required = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "RESEND_API_KEY", "GLOBAL_CLASH_FROM"];
 for (const key of required) {
   if (!process.env[key]) throw new Error("Missing required GitHub Actions secret: " + key);
@@ -10,6 +11,7 @@ const siteUrl = process.env.GLOBAL_CLASH_SITE_URL || "https://stikerpo-spec.gith
 const title = (process.env.UPDATE_TITLE || "A new arena update is here").trim().slice(0, 160);
 const notes = (process.env.UPDATE_NOTES || "A new version of GLOBAL CLASH is available. Open the game to see what changed.").trim().slice(0, 12000);
 const releaseUrl = process.env.UPDATE_URL || siteUrl;
+const idempotencyPrefix = String(process.env.UPDATE_IDEMPOTENCY_PREFIX || process.env.GITHUB_RUN_ID || "manual").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 48);
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, character => ({
@@ -36,11 +38,12 @@ async function loadConfirmedUsers() {
   return users;
 }
 
-async function sendOne(email, html, text) {
+async function sendOne(subscriber, html, text) {
+  const emailHash = createHash("sha256").update(subscriber.email.toLowerCase()).digest("hex").slice(0, 24);
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
-    headers: { Authorization: "Bearer " + resendKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ from, to: [email], subject: "GLOBAL CLASH Update: " + title, html, text })
+    headers: { Authorization: "Bearer " + resendKey, "Content-Type": "application/json", "Idempotency-Key": "global-clash-" + idempotencyPrefix + "-" + emailHash },
+    body: JSON.stringify({ from, to: [subscriber.email], subject: "GLOBAL CLASH Update: " + title, html, text })
   });
   if (!response.ok) {
     const detail = await response.text();
@@ -57,7 +60,7 @@ const subscribers = [...new Map(users
     user.user_metadata &&
     user.user_metadata.update_emails === true
   )
-  .map(user => [user.email.toLowerCase(), user.email])
+  .map(user => [user.email.toLowerCase(), { email: user.email }])
 ).values()];
 
 console.log("Found " + subscribers.length + " confirmed, opted-in update subscribers.");
@@ -90,9 +93,9 @@ const text = [
 
 let sent = 0;
 const failures = [];
-for (const email of subscribers) {
+for (const subscriber of subscribers) {
   try {
-    await sendOne(email, html, text);
+    await sendOne(subscriber, html, text);
     sent++;
   } catch (error) {
     failures.push(error.message);
