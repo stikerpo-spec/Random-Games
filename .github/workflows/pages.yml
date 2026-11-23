@@ -27,6 +27,7 @@ jobs:
         run: |
           node --check play.js
           node --check global-clash/app.js
+          node --check global-clash/arena3d.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
