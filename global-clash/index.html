@@ -29,6 +29,7 @@
     <div class="top-right">
       <div class="wallet"><span>◈</span><b id="headerCoins">0</b></div>
       <button class="profile-chip" data-view="profile"><span class="avatar-mini" id="headerAvatar">G</span><span id="headerName">PLAYER</span><span class="profile-level" id="headerLevel">LV 1</span></button>
+      <button class="btn btn-outline btn-small account-button" id="accountButton">ACCOUNT</button>
       <button class="mobile-menu" id="mobileMenu" aria-label="Menü">☰</button>
     </div>
   </header>
@@ -234,6 +235,15 @@
     <section class="view" id="view-settings">
       <div class="page-title"><div class="eyebrow">PREFERENCES / 07</div><h1>TUNE YOUR <span>CONTROLS.</span></h1><p>Stelle Mausgefühl und Sound ein. Deine Einstellungen bleiben auf diesem Gerät gespeichert.</p></div>
       <div class="settings-grid">
+        <article class="card-panel settings-panel account-settings-panel">
+          <div class="eyebrow">PLAYER ID / CLOUD ACCOUNT</div><h2>YOUR <span>ACCOUNT.</span></h2>
+          <div class="account-state" id="accountState">CHECKING ACCOUNT…</div>
+          <p class="account-email" id="accountEmail">Noch nicht angemeldet.</p>
+          <button class="btn btn-primary" id="accountSettingsSignIn">SIGN IN / CREATE ACCOUNT</button>
+          <button class="btn btn-outline hidden" id="accountSignOut">SIGN OUT</button>
+          <label class="settings-check email-optin" for="updateEmailOptIn"><input id="updateEmailOptIn" type="checkbox" disabled><span><b>EMAIL ME ABOUT NEW UPDATES</b><small>Nur nach Bestätigung deiner E-Mail-Adresse. Jederzeit abschaltbar.</small></span></label>
+          <div class="settings-note" id="updateEmailHint">Verbinde zuerst den Account-Server.</div>
+        </article>
         <article class="card-panel settings-panel">
           <div class="eyebrow">CAMERA / MOUSE LOOK</div><h2>FIND YOUR <span>FEEL.</span></h2>
           <label class="settings-control" for="mouseSensitivity"><span><b>MOUSE SENSITIVITY</b><small>Wie stark die Kamera auf Mausbewegungen reagiert.</small></span><output id="mouseSensitivityValue">1.0×</output></label>
@@ -253,6 +263,32 @@
   </main>
 
   <footer class="site-footer"><span><b>GLOBAL CLASH</b> / WORLD ARENA NETWORK</span><span>BUILT FOR THE NEXT MATCH · <a href="../index.html">BACK TO RANDOM GAMES ↗</a></span></footer>
+
+  <div class="modal-backdrop" id="accountModal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle">
+    <div class="modal-window small-modal auth-window">
+      <div class="modal-header"><div><div class="eyebrow">GLOBAL CLASH ID</div><h2 id="accountModalTitle">YOUR <span>ACCOUNT.</span></h2><p>Ein echter Account mit E-Mail-Bestätigung.</p></div><button class="modal-close" data-close="accountModal" aria-label="Schließen">×</button></div>
+      <div class="modal-content">
+        <div class="auth-mode-switch" id="authModeSwitch">
+          <button type="button" class="active" data-auth-mode="login">SIGN IN</button>
+          <button type="button" data-auth-mode="signup">CREATE ACCOUNT</button>
+        </div>
+        <form id="accountForm">
+          <label class="input-label" for="authEmail">EMAIL ADDRESS</label>
+          <input class="text-input" id="authEmail" type="email" maxlength="254" autocomplete="email" required placeholder="you@example.com">
+          <label class="input-label auth-password-label" id="authPasswordLabel" for="authPassword">PASSWORD</label>
+          <input class="text-input" id="authPassword" type="password" minlength="8" maxlength="128" autocomplete="current-password" required>
+          <small class="auth-password-help" id="authPasswordHelp">Mindestens 8 Zeichen.</small>
+          <div id="authSignupOptions" class="auth-signup-options hidden">
+            <label class="settings-check" for="signupUpdateEmails"><input id="signupUpdateEmails" type="checkbox"><span><b>EMAIL ME ABOUT GAME UPDATES</b><small>Optional. Du kannst diese E-Mails später in den Einstellungen abbestellen.</small></span></label>
+          </div>
+          <button class="btn btn-primary full auth-submit" id="authSubmit" type="submit">SIGN IN</button>
+        </form>
+        <button class="auth-forgot" type="button" id="forgotPassword">PASSWORT VERGESSEN?</button>
+        <p class="auth-feedback" id="authFeedback" role="status" aria-live="polite">Melde dich an oder erstelle einen Account.</p>
+        <p class="auth-privacy">Wir verwenden deine E-Mail für Anmeldung, Bestätigung und die von dir aktivierten Update-Mails. Kein Passwort wird im Spiel gespeichert.</p>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-backdrop" id="lobbyModal" role="dialog" aria-modal="true" aria-labelledby="lobbyTitle">
     <div class="modal-window lobby-window">
@@ -313,6 +349,9 @@
   </section>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="backend-config.js"></script>
+  <script src="account-auth.js"></script>
   <script src="arena3d.js"></script>
   <script src="app.js"></script>
 </body>
