@@ -88,3 +88,5 @@ These are original stylised game characters and outfits, not Fortnite models, lo
 
 ### Free mouse look
 The match captures the mouse pointer on desktop to provide continuous 360-degree third-person camera look. Mouse movement rotates the camera and the centre reticle aims into the arena. Press Escape to release the pointer and pause the local match; use Resume Match to capture it again. Touchscreen devices keep direct touch aiming and do not require pointer lock.
+
+The Settings page adds a persistent mouse-sensitivity slider (0.5×–2.5×), optional inverted vertical look and an SFX toggle. Control settings are stored locally in the browser and can be reset with one button.
