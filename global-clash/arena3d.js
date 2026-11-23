@@ -60,7 +60,7 @@ function makeFighter(classId,hex,withLabel=true){
     const droneMat=standard("#ad91ff",.5,.2,1);
     for(let n=0;n<2;n++){const d=new THREE.Group();add(d,new THREE.OctahedronGeometry(.17,1),droneMat,0,0,0);add(d,new THREE.TorusGeometry(.22,.025,6,18),bright,0,0,0).rotation.x=Math.PI/2;extras.add(d);drones.push(d);d.userData.side=n===0?-1:1;}
     add(extras,new THREE.BoxGeometry(.72,.26,.42),main,-.02,1.78,-.25);add(extras,new THREE.BoxGeometry(.22,.18,.08),bright,0,1.79,-.48);
-  }else{
+  }else if(classId==="striker"){
     add(extras,new THREE.BoxGeometry(.24,.18,.26),silver,.63,1.05,.02);add(extras,new THREE.TorusGeometry(.19,.035,7,20),bright,.68,1.08,.1).rotation.x=Math.PI/2;add(extras,new THREE.BoxGeometry(.16,.34,.15),mainDark,-.58,1.57,-.04);
   }
   const groundRing=add(root,new THREE.TorusGeometry(.56,.035,8,36),bright,0,.075,0);groundRing.rotation.x=-Math.PI/2;
