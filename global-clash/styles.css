@@ -73,3 +73,10 @@ body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 @media(max-width:720px){.skin-creator-head h3{font-size:24px}.skin-creator-actions .btn{min-width:135px}}
 
 .sprint-touch{border-color:#c5ff6780!important;color:#eaffb8!important}
+
+@media(max-width:420px){
+  .touch-pad{grid-template-columns:repeat(3,32px);grid-template-rows:repeat(2,32px);gap:3px}
+  .touch-actions{gap:3px}
+  .touch-actions button{width:35px;height:35px;font-size:6px}
+  .skin-palette-row{gap:8px}
+}
