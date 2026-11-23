@@ -38,6 +38,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           GLOBAL_CLASH_FROM: ${{ secrets.GLOBAL_CLASH_FROM }}
+          UPDATE_IDEMPOTENCY_PREFIX: ${{ github.event.release.id || github.run_id }}
           GLOBAL_CLASH_SITE_URL: https://stikerpo-spec.github.io/Random-Games/global-clash/
           UPDATE_TITLE: ${{ github.event.release.name || inputs.title || github.ref_name }}
           UPDATE_NOTES: ${{ github.event.release.body || inputs.notes || 'A new GLOBAL CLASH release is available.' }}
