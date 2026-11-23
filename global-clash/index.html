@@ -144,7 +144,7 @@
       <div class="loadout-layout">
         <div class="fighter-preview card-panel">
           <div class="preview-label">FIGHTER PREVIEW / LIVE</div>
-          <div class="preview-avatar" id="previewAvatar"><div class="avatar-aura"></div><div class="avatar-figure">✦</div></div>
+          <div class="preview-avatar" id="previewAvatar" aria-label="Drehbares 3D-Charaktermodell"><div class="avatar-aura"></div><div class="avatar-figure">✦</div></div>
           <div class="preview-name" id="previewName">PLAYER ONE</div>
           <div class="preview-sub" id="previewClass">STRIKER · LEVEL 1</div>
           <div class="preview-stats" id="previewStats"></div>
@@ -255,7 +255,8 @@
     </header>
     <div class="game-main">
       <div class="arena-stage">
-        <canvas id="arenaCanvas" width="1200" height="760" aria-label="Neon-Arena"></canvas>
+        <canvas id="arenaCanvas" width="1200" height="760" aria-label="3D-Neon-Arena"></canvas>
+        <div class="render-badge">3D ENGINE <i></i> WEBGL</div>
         <div class="game-overlay hidden" id="gameEndOverlay"><div class="end-card"><div class="eyebrow">MATCH COMPLETE</div><h2 id="endTitle">VICTORY</h2><p id="endMessage">Well played.</p><div class="end-rewards" id="endRewards"></div><div class="end-actions"><button class="btn btn-primary" id="rematchButton">REMATCH ↻</button><button class="btn btn-outline" id="endToMenu">BACK TO BASE</button></div></div></div>
         <div class="touch-controls" id="touchControls"><div class="touch-pad"><button data-key="w">▲</button><button data-key="a">◀</button><button data-key="s">▼</button><button data-key="d">▶</button></div><div class="touch-actions"><button data-key=" " class="dash-touch">DASH</button><button data-key="e">SHIELD</button><button data-key="j" class="pulse-touch">PULSE</button><button data-key="q" class="ultimate-touch">ULT</button></div></div>
       </div>
@@ -268,6 +269,8 @@
     </div>
   </section>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+  <script src="arena3d.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
