@@ -353,7 +353,7 @@ function spawnPositions(index){
 }
 function createGame(players,mode,map,online){
   const people={},list=players.slice();
-  if(mode==="teams"&&list.length<4){
+  if((mode==="teams"||mode==="core")&&list.length<4){
     while(list.length<4){const i=list.length;list.push(makeRosterPlayer("bot"+(i+1),"ARENA BOT "+(i-1),"guardian",i,true));}
   }
   if(mode==="training"&&list.length<2)list.push(makeRosterPlayer("bot1","TRAINING BOT","runner",1,true));
@@ -363,7 +363,7 @@ function createGame(players,mode,map,online){
     const cs=classStats(item.classId),pos=spawnPositions(i);
     people[item.id]={id:item.id,name:item.name,classId:item.classId||"striker",color:item.color||COLORS[i],team:i<2?"A":"B",x:pos.x,y:pos.y,
       hp:cs.maxHp,maxHp:cs.maxHp,energy:cs.maxEnergy,maxEnergy:cs.maxEnergy,speed:cs.speed,regen:cs.regen,shieldScale:cs.shield,
-      score:0,deaths:0,angle:0,attackCooldown:0,dashCooldown:0,dashTimer:0,shieldTimer:0,respawn:0,
+      score:0,kos:0,deaths:0,angle:0,attackCooldown:0,dashCooldown:0,dashTimer:0,shieldTimer:0,respawn:0,
       input:cleanInput({aimX:600,aimY:380}),isBot:!!item.isBot,disconnected:false};
   });
   return {id:"m"+Date.now()+Math.random().toString(36).slice(2,7),mode,map,online,phase:"playing",time:MODES[mode].seconds,elapsed:0,players:people,bullets:[],objective:{A:0,B:0},wave:1,spawnTimer:0,feed:[]};
@@ -430,7 +430,7 @@ function addArenaBot(){
   const id="wave"+Math.floor(game.elapsed)+"_"+ids.length;
   const pos=spawnPositions(Math.floor(Math.random()*4));
   const c=classStats("runner");
-  game.players[id]={id,name:"WAVE "+game.wave+" BOT",classId:"runner",color:"#ff9b6c",team:"B",x:pos.x,y:pos.y,hp:c.maxHp,maxHp:c.maxHp,energy:c.maxEnergy,maxEnergy:c.maxEnergy,speed:c.speed,regen:c.regen,shieldScale:c.shield,score:0,deaths:0,angle:0,attackCooldown:0,dashCooldown:0,dashTimer:0,shieldTimer:0,respawn:0,input:cleanInput({}),isBot:true,disconnected:false};
+  game.players[id]={id,name:"WAVE "+game.wave+" BOT",classId:"runner",color:"#ff9b6c",team:"B",x:pos.x,y:pos.y,hp:c.maxHp,maxHp:c.maxHp,energy:c.maxEnergy,maxEnergy:c.maxEnergy,speed:c.speed,regen:c.regen,shieldScale:c.shield,score:0,kos:0,deaths:0,angle:0,attackCooldown:0,dashCooldown:0,dashTimer:0,shieldTimer:0,respawn:0,input:cleanInput({}),isBot:true,disconnected:false};
 }
 function withinObstacle(x,y,r,blocks){
   return blocks.some(b=>x+r>b[0]-b[2]/2&&x-r<b[0]+b[2]/2&&y+r>b[1]-b[3]/2&&y-r<b[1]+b[3]/2);
@@ -447,7 +447,7 @@ function resolvePlayerPosition(p,dx,dy){
 function addKO(owner,victim){
   victim.deaths++;
   const scorer=game.players[owner];
-  if(scorer)scorer.score++;
+  if(scorer){scorer.kos=(scorer.kos||0)+1;if(game.mode!=="king")scorer.score++;}
   pushHostFeed("» "+(scorer?scorer.name:"Arena")+" scored a point.");
   if(game.mode==="survival"&&victim.id==="p1"){victim.hp=0;game.phase="ended";game.winner=null;return;}
   victim.respawn=2.1;victim.hp=0;
@@ -459,13 +459,11 @@ function updateObjective(dt){
     if(p.disconnected||p.hp<=0||p.respawn>0)return;
     if(Math.hypot(p.x-600,p.y-380)<105){if(game.mode==="king"){if(p.id==="p1")a++;else b++;}else if(p.team==="A")a++;else b++;}
   });
-  if(game.mode==="king"){
-    if(a>b)game.players.p1.score+=(dt*1.6);
-    else if(b>a){const bots=Object.values(game.players).filter(p=>p.team==="B"&&!p.isBot&&p.id!=="p1");if(bots[0])bots[0].score+=dt*1.6;else game.players.p1.score=Math.max(0,game.players.p1.score-dt*1.2);}
-    if(game.players.p1.score>=30){game.phase="ended";game.winner={id:"p1",name:game.players.p1.name,score:Math.floor(game.players.p1.score)};}
-  }else{
-    if(a>b)game.objective.A+=dt*2.1;else if(b>a)game.objective.B+=dt*2.1;
-    if(Math.max(game.objective.A,game.objective.B)>=30){game.phase="ended";game.winner={id:game.objective.A>game.objective.B?"teamA":"teamB",name:game.objective.A>game.objective.B?"TEAM A":"TEAM B",score:30};}
+  if(a>b)game.objective.A+=dt*(game.mode==="king"?1.6:2.1);else if(b>a)game.objective.B+=dt*(game.mode==="king"?1.6:2.1);
+  if(Math.max(game.objective.A,game.objective.B)>=30){
+    game.phase="ended";
+    if(game.mode==="king")game.winner={id:game.objective.A>game.objective.B?"p1":"bots",name:game.objective.A>game.objective.B?game.players.p1.name:"ARENA BOTS",score:30};
+    else game.winner={id:game.objective.A>game.objective.B?"teamA":"teamB",name:game.objective.A>game.objective.B?"TEAM A":"TEAM B",score:30};
   }
 }
 function updateHost(dt){
@@ -523,13 +521,16 @@ function updateHost(dt){
       const scoreB=Object.values(game.players).filter(p=>p.team==="B").reduce((n,p)=>n+p.score,0);
       if(Math.max(scoreA,scoreB)>=5){const team=scoreA>scoreB?"A":"B";game.phase="ended";game.winner={id:team==="A"?"teamA":"teamB",name:"TEAM "+team,score:Math.max(scoreA,scoreB)};}
     }
-    if(game.time<=0){game.phase="ended";game.winner=selectWinner();}
-    if(game.mode==="survival"&&game.phase==="playing"&&game.time<=0){game.phase="ended";game.winner={id:"p1",name:"SURVIVOR",score:game.players.p1.score};}
+    if(game.time<=0){
+      game.phase="ended";
+      game.winner=game.mode==="survival"?{id:"p1",name:"SURVIVOR",score:game.players.p1.score}:selectWinner();
+    }
   }
 }
 function selectWinner(){
   if(!game)return null;
   if(game.mode==="core")return {id:game.objective.A>=game.objective.B?"teamA":"teamB",name:game.objective.A>=game.objective.B?"TEAM A":"TEAM B",score:Math.floor(Math.max(game.objective.A,game.objective.B))};
+  if(game.mode==="king")return {id:game.objective.A>=game.objective.B?"p1":"bots",name:game.objective.A>=game.objective.B?game.players.p1.name:"ARENA BOTS",score:Math.floor(Math.max(game.objective.A,game.objective.B))};
   const people=Object.values(game.players).filter(p=>!p.disconnected);
   if(game.mode==="teams"){
     const a=people.filter(p=>p.team==="A").reduce((n,p)=>n+p.score,0),b=people.filter(p=>p.team==="B").reduce((n,p)=>n+p.score,0);
@@ -553,7 +554,7 @@ function renderGame(){
   });
   const me=game.players[myId];
   if(me){const hp=Math.max(0,Math.round(me.hp/me.maxHp*100)),energy=Math.max(0,Math.round(me.energy/me.maxEnergy*100));
-    $("fighterStatus").innerHTML='<div class="meter-row"><span>INTEGRITY</span><b>'+Math.round(me.hp)+' / '+me.maxHp+'</b></div><div class="meter"><i style="width:'+hp+'%;background:var(--lime)"></i></div><div class="meter-row"><span>ENERGY</span><b>'+Math.round(me.energy)+' / '+me.maxEnergy+'</b></div><div class="meter"><i style="width:'+energy+'%"></i></div><div class="meter-row"><span>CLASS</span><b>'+CLASS[me.classId].name.toUpperCase()+'</b></div>';
+    $("fighterStatus").innerHTML='<div class="meter-row"><span>INTEGRITY</span><b>'+Math.round(me.hp)+' / '+me.maxHp+'</b></div><div class="meter"><i style="width:'+hp+'%;background:var(--lime)"></i></div><div class="meter-row"><span>ENERGY</span><b>'+Math.round(me.energy)+' / '+me.maxEnergy+'</b></div><div class="meter"><i style="width:'+energy+'%"></i></div><div class="meter-row"><span>CLASS</span><b>'+CLASS[me.classId].name.toUpperCase()+'</b></div>'+(["king","core"].includes(game.mode)?'<div class="meter-row"><span>ZONE A</span><b>'+Math.floor(game.objective.A)+'</b></div><div class="meter-row"><span>ZONE B</span><b>'+Math.floor(game.objective.B)+'</b></div>':'');
   }
   drawArena();
   if(game.phase==="ended")handleMatchEnd();
@@ -592,7 +593,7 @@ function handleMatchEnd(){
     if(winner.id==="teamA"||winner.id==="teamB")won=(winner.id==="teamA"&&me.team==="A")||(winner.id==="teamB"&&me.team==="B");
     else won=winner.id===myId;
   }
-  const kills=Math.floor(me.score||0);
+  const kills=Math.floor(me.kos||0);
   profile.stats.matches++;profile.stats.kos+=kills;profile.stats.deaths+=me.deaths||0;
   if(won){profile.stats.wins++;profile.stats.streak++;profile.stats.bestStreak=Math.max(profile.stats.bestStreak,profile.stats.streak);profile.stats.rankPoints+=100+kills*18;profile.daily.progress.wins++;}
   else{profile.stats.losses++;profile.stats.streak=0;profile.stats.rankPoints+=Math.max(10,kills*8);}
