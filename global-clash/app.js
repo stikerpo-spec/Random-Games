@@ -76,6 +76,8 @@ function playSfx(kind){
 function updateSoundButton(){const button=$("soundToggle");if(button)button.textContent=soundEnabled?"SFX ON":"SFX OFF";}
 let touchState={};
 const canvas=$("arenaCanvas"),ctx=canvas.getContext("2d");
+const arena3d=window.GlobalClash3D?window.GlobalClash3D.createArena(canvas):null;
+const preview3d=window.GlobalClash3D?window.GlobalClash3D.createPreview($("previewAvatar")):null;
 const localStorageSafe={
   set(key,value){try{localStorage.setItem(key,value);}catch(e){}}
 };
@@ -174,6 +176,7 @@ function renderLoadout(){
   document.querySelectorAll(".class-card").forEach(el=>el.classList.toggle("selected",el.dataset.class===profile.classId));
   const skin=SKINS.find(s=>s.id===profile.skin)||SKINS[0];
   $("equippedCosmetic").innerHTML='<span class="cosmetic-swatch" style="background:'+skin.color+';color:'+skin.color+'"></span><span><b>'+skin.name+'</b><br><small>'+skin.desc+'</small></span>';
+  if(preview3d)preview3d.setCharacter(profile.classId,skinColor());
 }
 function renderSocial(){
   $("friendCodeDisplay").textContent=myCode();$("friendCount").textContent=profile.friends.length+" SAVED";
@@ -684,6 +687,7 @@ function renderGame(){
   if(game.phase==="ended")handleMatchEnd();
 }
 function drawArena(){
+  if(arena3d&&game){arena3d.update(game,performance.now()/1000);return;}
   const map=MAPS[game.map],c=ctx;c.clearRect(0,0,1200,760);c.fillStyle=map.bg;c.fillRect(0,0,1200,760);
   const glow=c.createRadialGradient(600,380,20,600,380,510);glow.addColorStop(0,map.grid+"22");glow.addColorStop(1,"#07101a00");c.fillStyle=glow;c.fillRect(0,0,1200,760);
   c.strokeStyle=map.grid+"18";c.lineWidth=1;
