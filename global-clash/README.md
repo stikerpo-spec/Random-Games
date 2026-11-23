@@ -84,3 +84,7 @@ The 3D match now uses an over-the-shoulder third-person follow camera with a scr
 The Outfit Lab lets players create original custom cosmetics with a name, main armour colour, energy accent colour and one of four silhouette themes (Vanguard, Runner, Tech or Shadow). Custom outfits are stored in the local browser profile and are sent to friends when joining a private match, so everyone sees each player's selected look. They are purely visual and do not change class stats.
 
 These are original stylised game characters and outfits, not Fortnite models, logos, maps, or copied skins. The camera perspective is a general third-person action-game style.
+
+
+### Free mouse look
+The match captures the mouse pointer on desktop to provide continuous 360-degree third-person camera look. Mouse movement rotates the camera and the centre reticle aims into the arena. Press Escape to release the pointer and pause the local match; use Resume Match to capture it again. Touchscreen devices keep direct touch aiming and do not require pointer lock.
