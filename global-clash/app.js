@@ -283,7 +283,7 @@ function createRoom(){
       if(!message||typeof message!=="object")return;
       if(message.type==="join"){
         if(game||lobbyPlayers.length>=MODES[selectedMode].limit){conn.send({type:"error",message:game?"The match has already started.":"This room is full."});conn.close();return;}
-        const id="p"+(lobbyPlayers.length+1);conn.playerId=id;
+        let seat=2;while(lobbyPlayers.some(player=>player.id==="p"+seat))seat++;const id="p"+seat;conn.playerId=id;
         lobbyPlayers.push(makeRosterPlayer(id,message.name,message.classId,lobbyPlayers.length));
         connections.push(conn);
         conn.send({type:"welcome",id,roomCode,players:lobbyPlayers,mode:selectedMode,map:selectedMap});
@@ -365,7 +365,7 @@ function createGame(players,mode,map,online){
   if(mode==="king"&&list.length<3){while(list.length<3){const i=list.length;list.push(makeRosterPlayer("bot"+i,"ZONE BOT "+i,"technician",i,true));}}
   list.slice(0,4).forEach((item,i)=>{
     const cs=classStats(item.classId),pos=spawnPositions(i);
-    people[item.id]={id:item.id,name:item.name,classId:item.classId||"striker",color:item.color||COLORS[i],team:i<2?"A":"B",x:pos.x,y:pos.y,
+    people[item.id]={id:item.id,name:item.name,classId:item.classId||"striker",color:item.color||COLORS[i],team:i%2===0?"A":"B",x:pos.x,y:pos.y,
       hp:cs.maxHp,maxHp:cs.maxHp,energy:cs.maxEnergy,maxEnergy:cs.maxEnergy,speed:cs.speed,regen:cs.regen,shieldScale:cs.shield,
       score:0,kos:0,deaths:0,angle:0,attackCooldown:0,dashCooldown:0,dashTimer:0,shieldTimer:0,respawn:0,
       ultimate:0,ultimateCooldown:0,overdriveTimer:0,speedBoostTimer:0,
@@ -550,7 +550,7 @@ function updateHost(dt){
       if(p.id===b.owner||p.disconnected||p.hp<=0||p.respawn>0)continue;
       if(game.mode==="teams"&&game.players[b.owner]&&game.players[b.owner].team===p.team)continue;
       if(Math.hypot(p.x-b.x,p.y-b.y)<22){
-        const damage=p.shieldTimer>0?b.damage*p.shieldScale:b.damage;
+        const damage=p.shieldTimer>0?b.damage*.4*p.shieldScale:b.damage;
         p.hp=Math.max(0,p.hp-damage);
         p.ultimate=Math.min(100,(p.ultimate||0)+5);
         const attacker=game.players[b.owner];if(attacker)attacker.ultimate=Math.min(100,(attacker.ultimate||0)+14);
