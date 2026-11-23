@@ -56,6 +56,24 @@ let profile=loadProfile();
 let selectedMode="training",selectedMap="neon";
 let peer=null,hostConn=null,connections=[],role="",roomCode="",myId="",lobbyPlayers=[],game=null;
 let keys={},mouse={x:600,y:380},pointerDown=false,lastFrame=performance.now(),lastSend=0,lastInput=0,feedItems=[],endHandled=false;
+let audioContext=null,soundEnabled=true;
+try{soundEnabled=localStorage.getItem("globalClashSfx")!=="off";}catch(e){}
+function playSfx(kind){
+  if(!soundEnabled)return;
+  try{
+    const AudioCtor=window.AudioContext||window.webkitAudioContext;if(!AudioCtor)return;
+    audioContext=audioContext||new AudioCtor();
+    if(audioContext.state==="suspended")audioContext.resume().catch(()=>{});
+    const now=audioContext.currentTime;
+    const presets={pulse:[520,190,.085,"triangle",.035],hit:[175,75,.12,"sawtooth",.045],confirm:[780,390,.07,"sine",.025],pickup:[480,980,.18,"sine",.045],ultimate:[170,880,.34,"sawtooth",.055],ko:[300,85,.22,"square",.04],start:[320,640,.2,"triangle",.035]};
+    const [from,to,duration,type,volume]=presets[kind]||presets.pulse;
+    const osc=audioContext.createOscillator(),gain=audioContext.createGain();
+    osc.type=type;osc.frequency.setValueAtTime(from,now);osc.frequency.exponentialRampToValueAtTime(Math.max(35,to),now+duration);
+    gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(volume,now+.012);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+    osc.connect(gain);gain.connect(audioContext.destination);osc.start(now);osc.stop(now+duration+.025);
+  }catch(e){}
+}
+function updateSoundButton(){const button=$("soundToggle");if(button)button.textContent=soundEnabled?"SFX ON":"SFX OFF";}
 let touchState={};
 const canvas=$("arenaCanvas"),ctx=canvas.getContext("2d");
 const localStorageSafe={
@@ -371,7 +389,7 @@ function createGame(players,mode,map,online){
       ultimate:0,ultimateCooldown:0,overdriveTimer:0,speedBoostTimer:0,
       input:cleanInput({aimX:600,aimY:380}),isBot:!!item.isBot,disconnected:false};
   });
-  return {id:"m"+Date.now()+Math.random().toString(36).slice(2,7),mode,map,online,phase:"playing",time:MODES[mode].seconds,elapsed:0,tournamentRound:1,players:people,bullets:[],pickups:[],pickupTimer:5,objective:{A:0,B:0},wave:1,spawnTimer:0,feed:[]};
+  return {id:"m"+Date.now()+Math.random().toString(36).slice(2,7),mode,map,online,phase:"playing",time:MODES[mode].seconds,elapsed:0,tournamentRound:1,players:people,bullets:[],pickups:[],particles:[],pickupTimer:5,objective:{A:0,B:0},wave:1,spawnTimer:0,feed:[]};
 }
 function startSolo(mode){
   disconnectNetwork();role="solo";roomCode="";myId="p1";
@@ -393,7 +411,7 @@ function restartNetworkMatch(){
 function openGame(){
   closeModal("lobbyModal");$("gameScreen").classList.add("open");$("gameEndOverlay").classList.add("hidden");
   $("gameModeLabel").textContent=MODES[game.mode].name.toUpperCase();$("gameMapLabel").textContent=MAPS[game.map].name.toUpperCase();
-  $("gameClock").textContent=formatTime(game.time);renderGame();lastFrame=performance.now();
+  $("gameClock").textContent=formatTime(game.time);updateSoundButton();playSfx("start");renderGame();lastFrame=performance.now();
 }
 function formatTime(t){return Math.floor(t/60).toString().padStart(2,"0")+":"+Math.ceil(t%60).toString().padStart(2,"0");}
 function pushFeed(text){
@@ -428,6 +446,16 @@ function botInput(bot){
 function pulse(p){
   const a=p.angle;
   game.bullets.push({owner:p.id,x:p.x+Math.cos(a)*24,y:p.y+Math.sin(a)*24,vx:Math.cos(a)*720,vy:Math.sin(a)*720,r:6,damage:p.overdriveTimer>0?29:18,life:1.25,color:p.color});
+  if(p.id===myId)playSfx("pulse");
+}
+function spawnBurst(x,y,color,count=9){
+  if(!game)return;
+  game.particles=game.particles||[];
+  for(let i=0;i<count;i++){
+    const a=Math.random()*Math.PI*2,s=55+Math.random()*205,life=.22+Math.random()*.38;
+    game.particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life,maxLife:life,color,size:1.5+Math.random()*3});
+  }
+  if(game.particles.length>140)game.particles.splice(0,game.particles.length-140);
 }
 function addArenaBot(){
   const ids=Object.keys(game.players);
@@ -453,6 +481,8 @@ function addKO(owner,victim){
   victim.deaths++;
   const scorer=game.players[owner];
   if(scorer){scorer.kos=(scorer.kos||0)+1;scorer.ultimate=Math.min(100,(scorer.ultimate||0)+32);if(game.mode!=="king")scorer.score++;}
+  spawnBurst(victim.x,victim.y,victim.color,24);
+  if(victim.id===myId)playSfx("ko");
   pushHostFeed("» "+(scorer?scorer.name:"Arena")+" scored a point.");
   if(game.mode==="survival"&&victim.id==="p1"){victim.hp=0;game.phase="ended";game.winner=null;return;}
   victim.respawn=2.1;victim.hp=0;
@@ -474,6 +504,8 @@ function updateObjective(dt){
 function activateUltimate(p){
   if(!p||p.ultimate<100||p.ultimateCooldown>0)return false;
   p.ultimate=0;p.ultimateCooldown=2;
+  if(p.id===myId)playSfx("ultimate");
+  spawnBurst(p.x,p.y,p.color,24);
   if(p.classId==="guardian"){
     p.hp=Math.min(p.maxHp,p.hp+38);p.shieldTimer=3.3;
     pushHostFeed("» "+p.name+" activated FORTRESS.");
@@ -506,6 +538,8 @@ function applyPickup(p,pickup){
   if(pickup.type==="repair")p.hp=Math.min(p.maxHp,p.hp+38);
   else if(pickup.type==="battery")p.energy=Math.min(p.maxEnergy,p.energy+55);
   else p.ultimate=Math.min(100,p.ultimate+42);
+  spawnBurst(pickup.x,pickup.y,p.color,17);
+  if(p.id===myId)playSfx("pickup");
   pushHostFeed("» "+p.name+" collected "+({repair:"REPAIR CELL",battery:"ENERGY CELL",charge:"ULTIMATE CHARGE"}[pickup.type])+".");
 }
 function updateHost(dt){
@@ -514,6 +548,7 @@ function updateHost(dt){
   game.pickupTimer-=dt;
   if(game.pickupTimer<=0){spawnPickup();game.pickupTimer=8+Math.random()*5;}
   game.pickups=(game.pickups||[]).filter(p=>{p.life-=dt;return p.life>0;});
+  game.particles=(game.particles||[]).filter(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.94;p.vy*=.94;p.life-=dt;return p.life>0;});
   if(game.mode==="survival"){
     game.wave=1+Math.floor(game.elapsed/24);
     game.spawnTimer-=dt;
@@ -553,7 +588,9 @@ function updateHost(dt){
         const damage=p.shieldTimer>0?b.damage*.4*p.shieldScale:b.damage;
         p.hp=Math.max(0,p.hp-damage);
         p.ultimate=Math.min(100,(p.ultimate||0)+5);
-        const attacker=game.players[b.owner];if(attacker)attacker.ultimate=Math.min(100,(attacker.ultimate||0)+14);
+        spawnBurst(b.x,b.y,p.color,7);
+        const attacker=game.players[b.owner];if(attacker){attacker.ultimate=Math.min(100,(attacker.ultimate||0)+14);if(attacker.id===myId)playSfx("confirm");}
+        if(p.id===myId)playSfx("hit");
         if(p.hp<=0)addKO(b.owner,p);
         consumed=true;break;
       }
@@ -656,6 +693,9 @@ function drawArena(){
     c.save();c.translate(pickup.x,pickup.y);c.globalAlpha=.78+.22*Math.sin(performance.now()/150);c.shadowBlur=24;c.shadowColor=color;c.strokeStyle=color;c.fillStyle=color+"22";c.lineWidth=2;
     c.beginPath();c.arc(0,0,15,0,Math.PI*2);c.fill();c.stroke();c.fillStyle=color;c.font="bold 17px DM Mono";c.textAlign="center";c.textBaseline="middle";c.fillText(symbols[pickup.type],0,1);c.restore();
   });
+  (game.particles||[]).forEach(particle=>{
+    c.save();c.globalAlpha=Math.max(0,particle.life/particle.maxLife);c.fillStyle=particle.color;c.shadowBlur=12;c.shadowColor=particle.color;c.beginPath();c.arc(particle.x,particle.y,particle.size,0,Math.PI*2);c.fill();c.restore();
+  });
   game.bullets.forEach(b=>{c.save();c.shadowBlur=18;c.shadowColor=b.color;c.fillStyle=b.color;c.beginPath();c.arc(b.x,b.y,6,0,Math.PI*2);c.fill();c.globalAlpha=.45;c.fillRect(b.x-20,b.y-2,17,4);c.restore();});
   Object.values(game.players).forEach(p=>{
     if(p.disconnected)return;
@@ -745,6 +785,7 @@ function attachEvents(){
   $("startOnlineMatch").addEventListener("click",startNetworkMatch);
   $("copyInvite").addEventListener("click",copyInvite);
   $("leaveMatch").addEventListener("click",leaveMatch);
+  $("soundToggle").addEventListener("click",()=>{soundEnabled=!soundEnabled;try{localStorage.setItem("globalClashSfx",soundEnabled?"on":"off");}catch(e){}updateSoundButton();if(soundEnabled)playSfx("start");});
   $("endToMenu").addEventListener("click",leaveMatch);
   $("rematchButton").addEventListener("click",rematch);
   $("addFriendForm").addEventListener("submit",e=>{e.preventDefault();addFriend($("friendCodeInput").value);$("friendCodeInput").value="";});
