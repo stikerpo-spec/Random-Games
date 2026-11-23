@@ -140,18 +140,20 @@ function createArena(canvas){
     const stage=canvas.parentElement,renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"high-performance"});
     renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.18;
     renderer.domElement.className="arena-3d-canvas";renderer.domElement.setAttribute("aria-label","GLOBAL CLASH 3D arena");stage.insertBefore(renderer.domElement,canvas);canvas.classList.add("legacy-arena-canvas");
-    const scene=new THREE.Scene(),camera=new THREE.OrthographicCamera(-13,13,8.2,-8.2,.1,100);
-    camera.position.set(0,28,13);camera.up.set(0,0,-1);camera.lookAt(0,0,0);
+    const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(54,1,.1,160);
+    camera.position.set(0,5.2,8);camera.lookAt(0,1.3,0);
     scene.add(new THREE.HemisphereLight("#c7f4ff","#142030",2.05));
     const keyLight=new THREE.DirectionalLight("#ffffff",2.25);keyLight.position.set(-7,16,8);scene.add(keyLight);
     const rimLight=new THREE.DirectionalLight("#53eedc",.95);rimLight.position.set(10,10,-8);scene.add(rimLight);
     let world=null,worldKey="",worldMode="";
     const fighters=new Map(),bullets=[],pickups=[],particles=[];
     const vA=new THREE.Vector3(0,1,0),vB=new THREE.Vector3();
+    const desiredCamera=new THREE.Vector3(),desiredLook=new THREE.Vector3(),lookTarget=new THREE.Vector3(0,1.3,0);
+    const aimPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0),raycaster=new THREE.Raycaster(),ndc=new THREE.Vector2();
+    let cameraReady=false;
     function resize(){
-      const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight),aspect=w/h;
-      const worldW=Math.max(25.4,16.1*aspect),worldH=worldW/aspect;
-      camera.left=-worldW/2;camera.right=worldW/2;camera.top=worldH/2;camera.bottom=-worldH/2;camera.updateProjectionMatrix();renderer.setSize(w,h,false);
+      const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);
+      camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);
     }
     resize();
     if(window.ResizeObserver)new ResizeObserver(resize).observe(stage);else window.addEventListener("resize",resize);
@@ -213,15 +215,27 @@ function createArena(canvas){
       while(particles.length<shown.length){const m=add(scene,new THREE.SphereGeometry(.055,6,6),new THREE.MeshBasicMaterial({color:"#ffffff",transparent:true,depthWrite:false}));particles.push(m);}
       particles.forEach((m,i)=>{const p=shown[i];m.visible=!!p;if(!p)return;const life=clamp((p.life||0)/(p.maxLife||1),0,1);m.position.set((p.x-600)/50,.15,(p.y-380)/50);m.scale.setScalar((p.size||2)*.025*(.5+life));m.material.color.set(p.color||"#ffffff");m.material.opacity=life;});
     }
-    function update(state,time){
+    function updateCamera(state,localId){
+      const players=Object.values(state.players||{});
+      const p=state.players&&state.players[localId]&&!state.players[localId].disconnected?state.players[localId]:players.find(item=>!item.disconnected);
+      if(!p)return;
+      const angle=p.angle||0,fx=Math.cos(angle),fz=Math.sin(angle),sx=-fz,sz=fx;
+      const px=(p.x-600)/50,pz=(p.y-380)/50;
+      desiredCamera.set(px-fx*6.3+sx*.88,5.15,pz-fz*6.3+sz*.88);
+      desiredLook.set(px+fx*2.8,1.35,pz+fz*2.8);
+      if(!cameraReady){camera.position.copy(desiredCamera);lookTarget.copy(desiredLook);cameraReady=true;}
+      else{const smooth=1-Math.exp(-8/60);camera.position.lerp(desiredCamera,smooth);lookTarget.lerp(desiredLook,smooth);}
+      camera.lookAt(lookTarget);
+    }
+    function update(state,time,localId){
       if(!state)return;const key=state.map||"neon",mode=state.mode||"training";
       if(!world||worldKey!==key)buildWorld(key,mode);
       else if(worldMode!==mode){worldMode=mode;world.userData.coreObjects.forEach(o=>o.visible=mode==="core");}
-      updatePlayers(state,time);updateBullets(state.bullets||[]);updatePickups(state.pickups||[],time);updateParticles(state.particles||[]);
+      updatePlayers(state,time);updateCamera(state,localId);updateBullets(state.bullets||[]);updatePickups(state.pickups||[],time);updateParticles(state.particles||[]);
       (world.userData.coreObjects||[]).forEach(o=>{if(o.geometry&&o.geometry.type==="OctahedronGeometry"){o.rotation.y=time*.7;o.rotation.x=Math.sin(time)*.1;}});
       renderer.render(scene,camera);
     }
-    function pointerToGame(clientX,clientY,rect){const d=new THREE.Vector3().subVectors(new THREE.Vector3(0,0,0),camera.position).normalize();const up=camera.up.clone().addScaledVector(d,-camera.up.dot(d)).normalize();const zScale=Math.max(.1,Math.abs(up.z));const worldW=camera.right-camera.left,worldH=camera.top-camera.bottom;return {x:clamp(600+(clientX-rect.left-rect.width/2)*50*worldW/rect.width,0,1200),y:clamp(380+(clientY-rect.top-rect.height/2)*50*worldH/(zScale*rect.height),0,760)};}
+    function pointerToGame(clientX,clientY,rect){ndc.set(((clientX-rect.left)/rect.width)*2-1,-(((clientY-rect.top)/rect.height)*2-1));raycaster.setFromCamera(ndc,camera);const point=raycaster.ray.intersectPlane(aimPlane,new THREE.Vector3());if(!point)return {x:600,y:380};return {x:clamp(600+point.x*50,0,1200),y:clamp(380+point.z*50,0,760)};}
     return {update,resize,renderer,pointerToGame,dispose(){renderer.dispose();renderer.domElement.remove();canvas.classList.remove("legacy-arena-canvas");}};
   }catch(error){console.warn("GLOBAL CLASH 3D renderer unavailable; using 2D fallback.",error);return null;}
 }
