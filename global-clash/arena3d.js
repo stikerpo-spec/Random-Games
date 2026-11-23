@@ -107,7 +107,7 @@ function createArena(canvas){
     renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.18;
     renderer.domElement.className="arena-3d-canvas";renderer.domElement.setAttribute("aria-label","GLOBAL CLASH 3D arena");stage.insertBefore(renderer.domElement,canvas);canvas.classList.add("legacy-arena-canvas");
     const scene=new THREE.Scene(),camera=new THREE.OrthographicCamera(-13,13,8.2,-8.2,.1,100);
-    camera.position.set(0,34,8);camera.up.set(0,0,-1);camera.lookAt(0,0,0);
+    camera.position.set(0,28,13);camera.up.set(0,0,-1);camera.lookAt(0,0,0);
     scene.add(new THREE.HemisphereLight("#c7f4ff","#142030",2.05));
     const keyLight=new THREE.DirectionalLight("#ffffff",2.25);keyLight.position.set(-7,16,8);scene.add(keyLight);
     const rimLight=new THREE.DirectionalLight("#53eedc",.95);rimLight.position.set(10,10,-8);scene.add(rimLight);
