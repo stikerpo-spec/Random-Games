@@ -193,10 +193,57 @@ function renderLoadout(){
   const c=CLASS[profile.classId];
   $("previewStats").innerHTML=[["HP",c.hp],["SPEED",Math.round(c.speed/3)],["ENERGY",c.energy]].map(([k,v])=>'<div class="preview-stat"><b>'+v+'</b><small>'+k+'</small></div>').join("");
   document.querySelectorAll(".class-card").forEach(el=>el.classList.toggle("selected",el.dataset.class===profile.classId));
-  const skin=SKINS.find(s=>s.id===profile.skin)||SKINS[0];
-  $("equippedCosmetic").innerHTML='<span class="cosmetic-swatch" style="background:'+skin.color+';color:'+skin.color+'"></span><span><b>'+skin.name+'</b><br><small>'+skin.desc+'</small></span>';
-  if(preview3d)preview3d.setCharacter(profile.classId,skinColor(),profile.skin);
+  const skin=skinInfo();
+  $("equippedCosmetic").innerHTML='<span class="cosmetic-swatch" style="background:'+skin.color+';color:'+skin.color+'"></span><span><b>'+skin.name+'</b><br><small>'+(skin.desc||"Personal custom outfit.")+'</small></span>';
+  const nameField=$("customSkinName");if(nameField&&!nameField.dataset.dirty)syncSkinCreatorFields();
+  updateSkinDraftPreview();
 }
+
+function skinDraft(){
+  const name=cleanName($("customSkinName").value||"MY SKIN").slice(0,18);
+  const color=$("customSkinPrimary").value||"#53eedc";
+  const accent=$("customSkinAccent").value||"#ad91ff";
+  const style=$("customSkinStyle").value||"vanguard";
+  return {id:"custom_preview",name,color,accent,style,desc:"Your live outfit design."};
+}
+function syncSkinCreatorFields(){
+  const skin=skinInfo();
+  $("customSkinName").value=skin.name||"MY CUSTOM SKIN";
+  $("customSkinPrimary").value=skin.color||"#53eedc";
+  $("customSkinAccent").value=skin.accent||"#ad91ff";
+  $("customSkinStyle").value=["vanguard","runner","tech","shadow"].includes(skin.style)?skin.style:"vanguard";
+}
+function updateSkinDraftPreview(){
+  if(!preview3d||!$("customSkinName"))return;
+  const draft=skinDraft();
+  preview3d.setCharacter(profile.classId,draft.color,draft);
+}
+function saveCustomSkin(){
+  const draft=skinDraft();
+  if(!/^#[0-9a-f]{6}$/i.test(draft.color)||!/^#[0-9a-f]{6}$/i.test(draft.accent)){toast("CHOOSE VALID COLOURS");return;}
+  const id="custom_"+randomCode().toLowerCase()+"_"+Math.random().toString(36).slice(2,5);
+  const outfit={...draft,id,desc:"Custom outfit created in Outfit Lab."};
+  profile.customSkins=Array.isArray(profile.customSkins)?profile.customSkins:[];
+  profile.customSkins.unshift(outfit);
+  profile.customSkins=profile.customSkins.slice(0,40);
+  if(!Array.isArray(profile.owned))profile.owned=["standard"];
+  profile.owned.push(id);profile.skin=id;
+  $("customSkinName").dataset.dirty="";
+  save();renderLoadout();renderShop();
+  toast("CUSTOM SKIN SAVED & EQUIPPED");
+}
+function randomiseSkinDraft(){
+  const palette=["#53eedc","#c5ff67","#ff6688","#ad91ff","#ffbd67","#9bdcff","#ff8b56","#7dcbff","#56e5df","#d8b4ff"];
+  const accents=["#f7fbff","#c5ff67","#53eedc","#ff6688","#ad91ff","#ffcf9e"];
+  const styles=["vanguard","runner","tech","shadow"];
+  $("customSkinPrimary").value=palette[Math.floor(Math.random()*palette.length)];
+  $("customSkinAccent").value=accents[Math.floor(Math.random()*accents.length)];
+  $("customSkinStyle").value=styles[Math.floor(Math.random()*styles.length)];
+  $("customSkinName").value="CUSTOM "+randomCode().slice(0,4);
+  $("customSkinName").dataset.dirty="1";
+  updateSkinDraftPreview();
+}
+
 function renderSocial(){
   $("friendCodeDisplay").textContent=myCode();$("friendCount").textContent=profile.friends.length+" SAVED";
   const list=$("friendList");list.innerHTML="";
@@ -231,7 +278,7 @@ function renderLeaderboard(){
 function renderShop(){
   $("shopCoins").textContent=profile.coins;
   const list=$("shopGrid");list.innerHTML="";
-  SKINS.forEach(skin=>{
+  [...SKINS,...profile.customSkins].forEach(skin=>{
     const owned=profile.owned.includes(skin.id),equipped=profile.skin===skin.id;
     const card=document.createElement("article");card.className="shop-item"+(owned?" owned":"");
     const preview=document.createElement("div");preview.className="shop-preview";const swatch=document.createElement("i");swatch.style.setProperty("--skin",skin.color);preview.append(swatch);
@@ -294,10 +341,9 @@ function disconnectNetwork(){
   try{if(peer&&!peer.destroyed)peer.destroy();}catch(e){}
   peer=null;
 }
-function makeRosterPlayer(id,name,classId,index,isBot=false,skinId){
-  const chosenId=(id==="p1"&&!isBot)?profile.skin:(skinId||"standard");
-  const skin=SKINS.find(item=>item.id===chosenId)||SKINS[0];
-  return {id,name:cleanName(name),classId:CLASS[classId]?classId:"striker",skinId:skin.id,color:skin.color,isBot};
+function makeRosterPlayer(id,name,classId,index,isBot=false,skinId,remoteSkinData){
+  const skin=(id==="p1"&&!isBot)?currentSkinData():(safeSkinData(remoteSkinData)||skinInfo(skinId||"standard"));
+  return {id,name:cleanName(name),classId:CLASS[classId]?classId:"striker",skinId:skin.id,skinData:{...skin},color:skin.color,isBot};
 }
 function cleanName(name){return String(name||"PLAYER").replace(/[^A-Za-z0-9ÄÖÜäöüß _-]/g,"").trim().slice(0,14)||"PLAYER";}
 function renderRoster(){
@@ -326,7 +372,7 @@ function createRoom(){
       if(message.type==="join"){
         if(game||lobbyPlayers.length>=MODES[selectedMode].limit){conn.send({type:"error",message:game?"The match has already started.":"This room is full."});conn.close();return;}
         let seat=2;while(lobbyPlayers.some(player=>player.id==="p"+seat))seat++;const id="p"+seat;conn.playerId=id;
-        lobbyPlayers.push(makeRosterPlayer(id,message.name,message.classId,lobbyPlayers.length,false,message.skinId));
+        lobbyPlayers.push(makeRosterPlayer(id,message.name,message.classId,lobbyPlayers.length,false,message.skinId,message.skinData));
         connections.push(conn);
         conn.send({type:"welcome",id,roomCode,players:lobbyPlayers,mode:selectedMode,map:selectedMap});
         sendRoster();toast("FIGHTER CONNECTED");
@@ -363,7 +409,7 @@ function joinRoom(){
   peer=new Peer(undefined,{debug:0});
   peer.on("open",()=>{
     hostConn=peer.connect("gc-"+code.toLowerCase(),{reliable:true});
-    hostConn.on("open",()=>hostConn.send({type:"join",name:profile.name,classId:profile.classId,skinId:profile.skin}));
+    hostConn.on("open",()=>hostConn.send({type:"join",name:profile.name,classId:profile.classId,skinId:profile.skin,skinData:currentSkinData()}));
     hostConn.on("data",message=>{
       if(!message||typeof message!=="object")return;
       if(message.type==="welcome"){
@@ -407,7 +453,7 @@ function createGame(players,mode,map,online){
   if(mode==="king"&&list.length<3){while(list.length<3){const i=list.length;list.push(makeRosterPlayer("bot"+i,"ZONE BOT "+i,"technician",i,true));}}
   list.slice(0,4).forEach((item,i)=>{
     const cs=classStats(item.classId),pos=spawnPositions(i);
-    people[item.id]={id:item.id,name:item.name,classId:item.classId||"striker",skinId:item.skinId||"standard",color:item.color||COLORS[i],team:i%2===0?"A":"B",x:pos.x,y:pos.y,
+    people[item.id]={id:item.id,name:item.name,classId:item.classId||"striker",skinId:item.skinId||"standard",skinData:item.skinData||skinInfo(item.skinId||"standard"),color:item.color||COLORS[i],team:i%2===0?"A":"B",x:pos.x,y:pos.y,
       hp:cs.maxHp,maxHp:cs.maxHp,energy:cs.maxEnergy,maxEnergy:cs.maxEnergy,speed:cs.speed,regen:cs.regen,shieldScale:cs.shield,
       score:0,kos:0,deaths:0,angle:0,attackCooldown:0,dashCooldown:0,dashTimer:0,shieldTimer:0,respawn:0,
       ultimate:0,ultimateCooldown:0,overdriveTimer:0,speedBoostTimer:0,
@@ -447,7 +493,7 @@ function cleanInput(input){
   input=input||{};
   const number=(v,def)=>Number.isFinite(Number(v))?Math.max(0,Math.min(1200,Number(v))):def;
   const move=v=>typeof v==="number"&&Number.isFinite(v)?Math.max(-1,Math.min(1,v)):null;
-  return {up:!!input.up,down:!!input.down,left:!!input.left,right:!!input.right,moveX:move(input.moveX),moveY:move(input.moveY),attack:!!input.attack,dash:!!input.dash,shield:!!input.shield,ultimate:!!input.ultimate,aimX:number(input.aimX,600),aimY:number(input.aimY,380)};
+  return {up:!!input.up,down:!!input.down,left:!!input.left,right:!!input.right,moveX:move(input.moveX),moveY:move(input.moveY),attack:!!input.attack,dash:!!input.dash,sprint:!!input.sprint,shield:!!input.shield,ultimate:!!input.ultimate,aimX:number(input.aimX,600),aimY:number(input.aimY,380)};
 }
 function getInput(){
   let aimX=mouse.x,aimY=mouse.y;
@@ -470,7 +516,7 @@ function getInput(){
     const magnitude=Math.hypot(moveX,moveY)||1;moveX/=magnitude;moveY/=magnitude;
   }
   return cleanInput({up,down,left,right,moveX,moveY,
-    attack:keys.j||pointerDown||touchState.j,dash:keys[" "]||touchState[" "],shield:keys.e||touchState.e,ultimate:keys.q||touchState.q,aimX,aimY
+    attack:keys.j||pointerDown||touchState.j,dash:keys[" "]||touchState[" "],sprint:keys.shift||touchState.shift,shield:keys.e||touchState.e,ultimate:keys.q||touchState.q,aimX,aimY
   });
 }
 function botInput(bot){
@@ -616,7 +662,7 @@ function updateHost(dt){
       const moving=Math.hypot(dx,dy)>0.001,vx=moving?dx:Math.cos(p.angle),vy=moving?dy:Math.sin(p.angle),len=Math.hypot(vx,vy)||1;
       resolvePlayerPosition(p,vx/len*112,vy/len*112);p.dashCooldown=1.35;p.dashTimer=.17;p.energy-=22;
     }
-    const speedFactor=(p.speedBoostTimer>0?1.65:1)*(p.dashTimer>0?1.5:1);
+    const speedFactor=(input.sprint?1.32:1)*(p.speedBoostTimer>0?1.65:1)*(p.dashTimer>0?1.5:1);
     resolvePlayerPosition(p,dx*p.speed*dt*speedFactor,dy*p.speed*dt*speedFactor);
     if(input.shield&&p.energy>0){p.shieldTimer=Math.max(p.shieldTimer,.12);p.energy=Math.max(0,p.energy-34*dt);}else{p.shieldTimer=Math.max(0,p.shieldTimer-dt);p.energy=Math.min(p.maxEnergy,p.energy+p.regen*dt);}
     if(input.attack&&p.attackCooldown<=0&&p.energy>=8){pulse(p);p.attackCooldown=p.overdriveTimer>0?.19:.36;p.energy-=8;}
@@ -840,6 +886,9 @@ function attachEvents(){
   $("saveCallsign").addEventListener("click",saveName);
   $("callsignInput").addEventListener("keydown",e=>{if(e.key==="Enter")saveName();});
   $("mobileMenu").addEventListener("click",()=>$("main-nav").classList.toggle("open"));
+  ["customSkinName","customSkinPrimary","customSkinAccent","customSkinStyle"].forEach(id=>$(id).addEventListener("input",()=>{$("customSkinName").dataset.dirty="1";updateSkinDraftPreview();}));
+  $("saveCustomSkin").addEventListener("click",saveCustomSkin);
+  $("randomSkin").addEventListener("click",randomiseSkinDraft);
   $("lobbyModal").addEventListener("click",e=>{if(e.target===$("lobbyModal"))closeModal("lobbyModal");});
   const invite=new URLSearchParams(location.search).get("room");
   if(invite){$("joinCode").value=invite.toUpperCase().slice(0,6);setTimeout(openLobby,250);}
