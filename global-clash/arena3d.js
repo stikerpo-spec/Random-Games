@@ -195,8 +195,14 @@ function createArena(canvas){
     }
     function aimFromScreen(x,y){
       ndc.set(x,y);raycaster.setFromCamera(ndc,camera);
-      const hit=raycaster.ray.intersectPlane(aimPlane,new THREE.Vector3());
-      if(!hit)return {x:600,y:380};
+      const ray=raycaster.ray;
+      let hit=ray.intersectPlane(aimPlane,new THREE.Vector3());
+      if(!hit){
+        const flat=new THREE.Vector3(ray.direction.x,0,ray.direction.z);
+        if(flat.lengthSq()<.0001)return {x:600,y:380};
+        flat.normalize();
+        hit=new THREE.Vector3(ray.origin.x,0,ray.origin.z).addScaledVector(flat,28);
+      }
       return {x:clamp(600+hit.x*50,0,1200),y:clamp(380+hit.z*50,0,760)};
     }
     function getAimPoint(){return aimFromScreen(0,0);}
