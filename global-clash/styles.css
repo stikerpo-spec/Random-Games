@@ -26,3 +26,6 @@ body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 
 @media(max-width:720px){.touch-actions button{width:43px;height:43px;font-size:7px}.game-controls{display:none}}
 .ultimate-touch{border-color:#ad91ff88!important;color:#d8caff!important;box-shadow:0 0 15px #ad91ff22}
+
+.game-top-actions{display:flex;align-items:center;gap:7px}
+@media(max-width:720px){.game-top-actions{gap:4px}.game-top-actions .btn{font-size:7px;letter-spacing:.05em}}
