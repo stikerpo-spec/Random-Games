@@ -812,7 +812,9 @@ function attachEvents(){
   if(invite){$("joinCode").value=invite.toUpperCase().slice(0,6);setTimeout(openLobby,250);}
 }
 function setAim(e){
-  const r=canvas.getBoundingClientRect();mouse.x=Math.max(0,Math.min(1200,(e.clientX-r.left)/r.width*1200));mouse.y=Math.max(0,Math.min(760,(e.clientY-r.top)/r.height*760));
+  const r=canvas.getBoundingClientRect();
+  if(arena3d&&arena3d.pointerToGame){const point=arena3d.pointerToGame(e.clientX,e.clientY,r);mouse.x=point.x;mouse.y=point.y;}
+  else{mouse.x=Math.max(0,Math.min(1200,(e.clientX-r.left)/r.width*1200));mouse.y=Math.max(0,Math.min(760,(e.clientY-r.top)/r.height*760));}
   if(e.pointerType==="touch")lastTouchAim=performance.now();
 }
 canvas.addEventListener("pointermove",setAim);
