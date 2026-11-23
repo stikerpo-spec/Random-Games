@@ -539,7 +539,7 @@ function updateHost(dt){
     }
     const speedFactor=(p.speedBoostTimer>0?1.65:1)*(p.dashTimer>0?1.5:1);
     resolvePlayerPosition(p,dx*p.speed*dt*speedFactor,dy*p.speed*dt*speedFactor);
-    if(input.shield&&p.energy>0){p.shieldTimer=.12;p.energy=Math.max(0,p.energy-34*dt);}else{p.shieldTimer=Math.max(0,p.shieldTimer-dt);p.energy=Math.min(p.maxEnergy,p.energy+p.regen*dt);}
+    if(input.shield&&p.energy>0){p.shieldTimer=Math.max(p.shieldTimer,.12);p.energy=Math.max(0,p.energy-34*dt);}else{p.shieldTimer=Math.max(0,p.shieldTimer-dt);p.energy=Math.min(p.maxEnergy,p.energy+p.regen*dt);}
     if(input.attack&&p.attackCooldown<=0&&p.energy>=8){pulse(p);p.attackCooldown=p.overdriveTimer>0?.19:.36;p.energy-=8;}
     if(Math.hypot(p.x-600,p.y-380)<105&&game.mode==="core")p.ultimate=Math.min(100,p.ultimate+2.4*dt);
   });
