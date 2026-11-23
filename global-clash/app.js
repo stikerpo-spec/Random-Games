@@ -55,7 +55,7 @@ function loadProfile(){
 let profile=loadProfile();
 let selectedMode="training",selectedMap="neon";
 let peer=null,hostConn=null,connections=[],role="",roomCode="",myId="",lobbyPlayers=[],game=null;
-let keys={},mouse={x:600,y:380},pointerDown=false,lastFrame=performance.now(),lastSend=0,lastInput=0,lastHudUpdate=0,feedItems=[],endHandled=false;
+let keys={},mouse={x:600,y:380},pointerDown=false,lastFrame=performance.now(),lastSend=0,lastInput=0,lastHudUpdate=0,lastTouchAim=0,feedItems=[],endHandled=false;
 let audioContext=null,soundEnabled=true;
 try{soundEnabled=localStorage.getItem("globalClashSfx")!=="off";}catch(e){}
 function playSfx(kind){
@@ -425,9 +425,17 @@ function cleanInput(input){
   return {up:!!input.up,down:!!input.down,left:!!input.left,right:!!input.right,attack:!!input.attack,dash:!!input.dash,shield:!!input.shield,ultimate:!!input.ultimate,aimX:number(input.aimX,600),aimY:number(input.aimY,380)};
 }
 function getInput(){
+  let aimX=mouse.x,aimY=mouse.y;
+  const coarse=window.matchMedia&&window.matchMedia("(pointer: coarse)").matches;
+  if(coarse&&performance.now()-lastTouchAim>1600&&game&&game.players[myId]){
+    const me=game.players[myId];
+    const targets=Object.values(game.players).filter(p=>p.id!==myId&&!p.disconnected&&p.hp>0&&p.respawn<=0&&(game.mode!=="teams"||p.team!==me.team));
+    const target=targets.sort((a,b)=>Math.hypot(a.x-me.x,a.y-me.y)-Math.hypot(b.x-me.x,b.y-me.y))[0];
+    if(target){aimX=target.x;aimY=target.y;}
+  }
   return cleanInput({
     up:keys.w||keys.arrowup||touchState.w,down:keys.s||keys.arrowdown||touchState.s,left:keys.a||keys.arrowleft||touchState.a,right:keys.d||keys.arrowright||touchState.d,
-    attack:keys.j||pointerDown||touchState.j,dash:keys[" "]||touchState[" "],shield:keys.e||touchState.e,ultimate:keys.q||touchState.q,aimX:mouse.x,aimY:mouse.y
+    attack:keys.j||pointerDown||touchState.j,dash:keys[" "]||touchState[" "],shield:keys.e||touchState.e,ultimate:keys.q||touchState.q,aimX,aimY
   });
 }
 function botInput(bot){
@@ -801,6 +809,7 @@ function attachEvents(){
 }
 function setAim(e){
   const r=canvas.getBoundingClientRect();mouse.x=Math.max(0,Math.min(1200,(e.clientX-r.left)/r.width*1200));mouse.y=Math.max(0,Math.min(760,(e.clientY-r.top)/r.height*760));
+  if(e.pointerType==="touch")lastTouchAim=performance.now();
 }
 canvas.addEventListener("pointermove",setAim);
 canvas.addEventListener("pointerdown",e=>{setAim(e);pointerDown=true;canvas.setPointerCapture(e.pointerId);});
