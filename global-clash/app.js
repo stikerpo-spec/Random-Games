@@ -237,9 +237,9 @@ function launchSelected(){
   else startSolo(selectedMode);
 }
 function openLobby(){
-  if(!window.Peer){$("lobbyError").textContent="PeerJS konnte nicht geladen werden. Prüfe deine Internetverbindung.";return;}
   $("lobbyModeSummary").textContent=MODES[selectedMode].name.toUpperCase()+" · "+MAPS[selectedMap].name.toUpperCase()+" · "+CLASS[profile.classId].name.toUpperCase();
-  $("lobbyError").textContent="";$("roomState").classList.add("hidden");
+  $("lobbyError").textContent=window.Peer?"":"PeerJS konnte nicht geladen werden. Prüfe deine Internetverbindung.";
+  $("roomState").classList.add("hidden");
   $("lobbyModal").classList.add("open");
 }
 function closeModal(id){$(id).classList.remove("open");}
