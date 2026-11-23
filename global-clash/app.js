@@ -64,7 +64,7 @@ function loadProfile(){
 let profile=loadProfile();
 let selectedMode="training",selectedMap="neon";
 let peer=null,hostConn=null,connections=[],role="",roomCode="",myId="",lobbyPlayers=[],game=null;
-let keys={},mouse={x:600,y:380},pointerDown=false,lastFrame=performance.now(),lastSend=0,lastInput=0,lastHudUpdate=0,lastTouchAim=0,feedItems=[],endHandled=false;
+let keys={},mouse={x:600,y:380},pointerDown=false,gamePaused=false,pointerLockUnavailable=false,lastFrame=performance.now(),lastSend=0,lastInput=0,lastHudUpdate=0,lastTouchAim=0,feedItems=[],endHandled=false;
 let audioContext=null,soundEnabled=true;
 try{soundEnabled=localStorage.getItem("globalClashSfx")!=="off";}catch(e){}
 function playSfx(kind){
@@ -480,8 +480,48 @@ function restartNetworkMatch(){
 }
 function openGame(){
   closeModal("lobbyModal");$("gameScreen").classList.add("open");$("gameEndOverlay").classList.add("hidden");
+  $("gamePauseOverlay").classList.add("hidden");gamePaused=false;
   $("gameModeLabel").textContent=MODES[game.mode].name.toUpperCase();$("gameMapLabel").textContent=MAPS[game.map].name.toUpperCase();
   $("gameClock").textContent=formatTime(game.time);updateSoundButton();playSfx("start");renderGame();lastFrame=performance.now();
+  const coarse=window.matchMedia&&window.matchMedia("(pointer: coarse)").matches;
+  if(coarse){pointerLockUnavailable=true;return;}
+  captureGameMouse();
+}
+function pauseMatch(){
+  if(!game||!$("gameScreen").classList.contains("open"))return;
+  gamePaused=true;keys={};touchState={};pointerDown=false;
+  if(role==="guest")sendHost({type:"input",input:cleanInput({aimX:mouse.x,aimY:mouse.y})});
+  $("gamePauseOverlay").classList.remove("hidden");
+  if(arena3d)arena3d.exitPointerLock();
+}
+function captureGameMouse(){
+  if(!arena3d||!arena3d.requestPointerLock){pointerLockUnavailable=true;gamePaused=false;$("gamePauseOverlay").classList.add("hidden");return;}
+  pointerLockUnavailable=false;
+  arena3d.requestPointerLock().then(()=>{
+    setTimeout(()=>{
+      if(game&&$("gameScreen").classList.contains("open")&&!arena3d.isPointerLocked())pauseMatch();
+    },260);
+  }).catch(()=>pauseMatch());
+}
+function resumeMatch(){
+  if(!game)return;
+  keys={};touchState={};pointerDown=false;
+  const coarse=window.matchMedia&&window.matchMedia("(pointer: coarse)").matches;
+  if(coarse||!arena3d){pointerLockUnavailable=true;gamePaused=false;$("gamePauseOverlay").classList.add("hidden");return;}
+  pointerLockUnavailable=false;
+  arena3d.requestPointerLock().then(()=>{
+    setTimeout(()=>{
+      if(game&&$("gameScreen").classList.contains("open")&&!arena3d.isPointerLocked()){
+        pointerLockUnavailable=true;gamePaused=false;$("gamePauseOverlay").classList.add("hidden");toast("CURSOR AIM ENABLED");
+      }
+    },260);
+  }).catch(()=>{
+    pointerLockUnavailable=true;gamePaused=false;$("gamePauseOverlay").classList.add("hidden");toast("CURSOR AIM ENABLED");
+  });
+}
+function updateAimFromLockedCamera(){
+  if(!arena3d||!arena3d.getAimPoint)return;
+  const point=arena3d.getAimPoint();mouse.x=point.x;mouse.y=point.y;
 }
 function formatTime(t){return Math.floor(t/60).toString().padStart(2,"0")+":"+Math.ceil(t%60).toString().padStart(2,"0");}
 function pushFeed(text){
@@ -833,7 +873,9 @@ function handleMatchEnd(){
 }
 function leaveMatch(){
   if(role==="host")sendAll({type:"feed",text:"» Host ended the room."});
-  $("gameScreen").classList.remove("open");game=null;pointerDown=false;keys={};touchState={};
+  if(arena3d)arena3d.exitPointerLock();
+  $("gameScreen").classList.remove("open");$("gamePauseOverlay").classList.add("hidden");
+  game=null;gamePaused=false;pointerDown=false;keys={};touchState={};
   disconnectNetwork();role="";roomCode="";myId="";lobbyPlayers=[];
   $("gameEndOverlay").classList.add("hidden");
   renderAll();setView("home");
@@ -876,6 +918,8 @@ function attachEvents(){
   $("startOnlineMatch").addEventListener("click",startNetworkMatch);
   $("copyInvite").addEventListener("click",copyInvite);
   $("leaveMatch").addEventListener("click",leaveMatch);
+  $("resumeMatchButton").addEventListener("click",resumeMatch);
+  $("pauseToMenuButton").addEventListener("click",leaveMatch);
   $("soundToggle").addEventListener("click",()=>{soundEnabled=!soundEnabled;try{localStorage.setItem("globalClashSfx",soundEnabled?"on":"off");}catch(e){}updateSoundButton();if(soundEnabled)playSfx("start");});
   $("endToMenu").addEventListener("click",leaveMatch);
   $("rematchButton").addEventListener("click",rematch);
@@ -901,13 +945,40 @@ function setAim(e){
   if(reticle){const stage=canvas.parentElement.getBoundingClientRect();reticle.style.left=(e.clientX-stage.left)+"px";reticle.style.top=(e.clientY-stage.top)+"px";}
   if(e.pointerType==="touch")lastTouchAim=performance.now();
 }
-canvas.addEventListener("pointermove",setAim);
-canvas.addEventListener("pointerdown",e=>{setAim(e);pointerDown=true;canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener("pointermove",e=>{
+  if(arena3d&&arena3d.isPointerLocked()){
+    arena3d.look(e.movementX||0,e.movementY||0);
+    updateAimFromLockedCamera();
+  }else setAim(e);
+});
+canvas.addEventListener("pointerdown",e=>{
+  if(e.pointerType==="mouse"&&arena3d&&!arena3d.isPointerLocked()&&!pointerLockUnavailable){
+    e.preventDefault();captureGameMouse();return;
+  }
+  if(arena3d&&arena3d.isPointerLocked())updateAimFromLockedCamera();else setAim(e);
+  pointerDown=true;
+  if(e.pointerType!=="mouse"&&canvas.setPointerCapture)canvas.setPointerCapture(e.pointerId);
+});
 canvas.addEventListener("pointerup",()=>pointerDown=false);
 canvas.addEventListener("pointercancel",()=>pointerDown=false);
+document.addEventListener("pointerlockchange",()=>{
+  if(!$("gameScreen").classList.contains("open")||!game)return;
+  const locked=!!(arena3d&&arena3d.isPointerLocked());
+  if(locked){
+    pointerLockUnavailable=false;gamePaused=false;$("gamePauseOverlay").classList.add("hidden");
+    updateAimFromLockedCamera();
+  }else if(!gamePaused)pauseMatch();
+});
+document.addEventListener("pointerlockerror",()=>{
+  if(game&&$("gameScreen").classList.contains("open"))pauseMatch();
+});
 window.addEventListener("keydown",e=>{
-  const k=e.key.toLowerCase();if([" ","arrowup","arrowdown","arrowleft","arrowright"].includes(k))e.preventDefault();keys[k]=true;
-  if(k==="escape"&&$("gameScreen").classList.contains("open"))leaveMatch();
+  const k=e.key.toLowerCase();
+  if(k==="escape"&&$("gameScreen").classList.contains("open")){
+    e.preventDefault();pauseMatch();return;
+  }
+  if([" ","arrowup","arrowdown","arrowleft","arrowright"].includes(k))e.preventDefault();
+  keys[k]=true;
 });
 window.addEventListener("keyup",e=>{keys[e.key.toLowerCase()]=false;});
 document.querySelectorAll("[data-key]").forEach(button=>{
@@ -916,11 +987,11 @@ document.querySelectorAll("[data-key]").forEach(button=>{
 });
 function frame(now){
   const dt=Math.min(.04,Math.max(0,(now-lastFrame)/1000));lastFrame=now;
-  if(game&&game.phase==="playing"){
+  if(game&&game.phase==="playing"&&!gamePaused){
     if(role==="solo"||role==="host")updateHost(dt);
     else if(role==="guest"&&now-lastInput>40){sendHost({type:"input",input:getInput()});lastInput=now;}
   }
-  if(game&&role==="host"&&now-lastSend>45){sendAll({type:"state",state:game});lastSend=now;}
+  if(game&&role==="host"&&!gamePaused&&now-lastSend>45){sendAll({type:"state",state:game});lastSend=now;}
   if(game&&$("gameScreen").classList.contains("open")){
     if(now-lastHudUpdate>120){renderGame();lastHudUpdate=now;}
     else drawArena();
