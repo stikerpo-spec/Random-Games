@@ -181,7 +181,7 @@ function renderLoadout(){
   document.querySelectorAll(".class-card").forEach(el=>el.classList.toggle("selected",el.dataset.class===profile.classId));
   const skin=SKINS.find(s=>s.id===profile.skin)||SKINS[0];
   $("equippedCosmetic").innerHTML='<span class="cosmetic-swatch" style="background:'+skin.color+';color:'+skin.color+'"></span><span><b>'+skin.name+'</b><br><small>'+skin.desc+'</small></span>';
-  if(preview3d)preview3d.setCharacter(profile.classId,skinColor());
+  if(preview3d)preview3d.setCharacter(profile.classId,skinColor(),profile.skin);
 }
 function renderSocial(){
   $("friendCodeDisplay").textContent=myCode();$("friendCount").textContent=profile.friends.length+" SAVED";
@@ -312,7 +312,7 @@ function createRoom(){
       if(message.type==="join"){
         if(game||lobbyPlayers.length>=MODES[selectedMode].limit){conn.send({type:"error",message:game?"The match has already started.":"This room is full."});conn.close();return;}
         let seat=2;while(lobbyPlayers.some(player=>player.id==="p"+seat))seat++;const id="p"+seat;conn.playerId=id;
-        lobbyPlayers.push(makeRosterPlayer(id,message.name,message.classId,lobbyPlayers.length));
+        lobbyPlayers.push(makeRosterPlayer(id,message.name,message.classId,lobbyPlayers.length,false,message.skinId));
         connections.push(conn);
         conn.send({type:"welcome",id,roomCode,players:lobbyPlayers,mode:selectedMode,map:selectedMap});
         sendRoster();toast("FIGHTER CONNECTED");
@@ -349,7 +349,7 @@ function joinRoom(){
   peer=new Peer(undefined,{debug:0});
   peer.on("open",()=>{
     hostConn=peer.connect("gc-"+code.toLowerCase(),{reliable:true});
-    hostConn.on("open",()=>hostConn.send({type:"join",name:profile.name,classId:profile.classId}));
+    hostConn.on("open",()=>hostConn.send({type:"join",name:profile.name,classId:profile.classId,skinId:profile.skin}));
     hostConn.on("data",message=>{
       if(!message||typeof message!=="object")return;
       if(message.type==="welcome"){
@@ -393,7 +393,7 @@ function createGame(players,mode,map,online){
   if(mode==="king"&&list.length<3){while(list.length<3){const i=list.length;list.push(makeRosterPlayer("bot"+i,"ZONE BOT "+i,"technician",i,true));}}
   list.slice(0,4).forEach((item,i)=>{
     const cs=classStats(item.classId),pos=spawnPositions(i);
-    people[item.id]={id:item.id,name:item.name,classId:item.classId||"striker",color:item.color||COLORS[i],team:i%2===0?"A":"B",x:pos.x,y:pos.y,
+    people[item.id]={id:item.id,name:item.name,classId:item.classId||"striker",skinId:item.skinId||"standard",color:item.color||COLORS[i],team:i%2===0?"A":"B",x:pos.x,y:pos.y,
       hp:cs.maxHp,maxHp:cs.maxHp,energy:cs.maxEnergy,maxEnergy:cs.maxEnergy,speed:cs.speed,regen:cs.regen,shieldScale:cs.shield,
       score:0,kos:0,deaths:0,angle:0,attackCooldown:0,dashCooldown:0,dashTimer:0,shieldTimer:0,respawn:0,
       ultimate:0,ultimateCooldown:0,overdriveTimer:0,speedBoostTimer:0,
@@ -694,7 +694,7 @@ function renderGame(){
   if(game.phase==="ended")handleMatchEnd();
 }
 function drawArena(){
-  if(arena3d&&game){arena3d.update(game,performance.now()/1000);return;}
+  if(arena3d&&game){arena3d.update(game,performance.now()/1000,myId);return;}
   const map=MAPS[game.map],c=ctx;c.clearRect(0,0,1200,760);c.fillStyle=map.bg;c.fillRect(0,0,1200,760);
   const glow=c.createRadialGradient(600,380,20,600,380,510);glow.addColorStop(0,map.grid+"22");glow.addColorStop(1,"#07101a00");c.fillStyle=glow;c.fillRect(0,0,1200,760);
   c.strokeStyle=map.grid+"18";c.lineWidth=1;
@@ -822,6 +822,8 @@ function setAim(e){
   const r=canvas.getBoundingClientRect();
   if(arena3d&&arena3d.pointerToGame){const point=arena3d.pointerToGame(e.clientX,e.clientY,r);mouse.x=point.x;mouse.y=point.y;}
   else{mouse.x=Math.max(0,Math.min(1200,(e.clientX-r.left)/r.width*1200));mouse.y=Math.max(0,Math.min(760,(e.clientY-r.top)/r.height*760));}
+  const reticle=$("arenaReticle");
+  if(reticle){const stage=canvas.parentElement.getBoundingClientRect();reticle.style.left=(e.clientX-stage.left)+"px";reticle.style.top=(e.clientY-stage.top)+"px";}
   if(e.pointerType==="touch")lastTouchAim=performance.now();
 }
 canvas.addEventListener("pointermove",setAim);
