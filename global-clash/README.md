@@ -75,3 +75,12 @@ The match view now uses a real-time Three.js/WebGL renderer. Fighters are constr
 No external character model downloads are required: the character geometry is generated in global-clash/arena3d.js. Three.js is loaded from a CDN, so the first load requires an internet connection and a browser with WebGL enabled. If WebGL is unavailable, the earlier 2D renderer remains as a fallback.
 
 The existing gameplay simulation, keyboard/touch controls, game modes, private PeerJS rooms, and local profile progression remain in app.js. The multiplayer/network caveats described above still apply.
+
+
+## Third-person camera and original skins
+
+The 3D match now uses an over-the-shoulder third-person follow camera with a screen reticle, camera-relative WASD movement and Shift sprint. The player remains visible in front of the camera; mouse/touch aim is projected into the 3D arena.
+
+The Outfit Lab lets players create original custom cosmetics with a name, main armour colour, energy accent colour and one of four silhouette themes (Vanguard, Runner, Tech or Shadow). Custom outfits are stored in the local browser profile and are sent to friends when joining a private match, so everyone sees each player's selected look. They are purely visual and do not change class stats.
+
+These are original stylised game characters and outfits, not Fortnite models, logos, maps, or copied skins. The camera perspective is a general third-person action-game style.
