@@ -103,10 +103,11 @@ function makeFighter(classId,hex,skinId="standard",withLabel=true){
   const shield=new THREE.Mesh(new THREE.IcosahedronGeometry(.79,2),new THREE.MeshBasicMaterial({color:"#c9ffff",transparent:true,opacity:.16,wireframe:true,depthWrite:false}));
   shield.position.y=1.15;shield.scale.set(.88,1.33,.88);root.add(shield);shield.visible=false;
   const respawnRing=add(root,new THREE.TorusGeometry(.64,.04,6,32),glowMaterial("#ff6688"),0,.12,0);respawnRing.rotation.x=-Math.PI/2;respawnRing.visible=false;
-  add(root,new THREE.PlaneGeometry(1.2,.11),new THREE.MeshBasicMaterial({color:"#07111b",side:THREE.DoubleSide}),0,2.77,0).rotation.x=-Math.PI/2;
-  const barFill=add(root,new THREE.PlaneGeometry(1.08,.055),new THREE.MeshBasicMaterial({color:"#c5ff67",side:THREE.DoubleSide}),0,2.785,0);barFill.rotation.x=-Math.PI/2;
-  const label=withLabel?makeTextSprite("FIGHTER",hex||"#53eedc"):null;if(label){label.position.set(0,3.12,0);root.add(label);}
-  return {root,body,leftArm,rightArm,leftLeg,rightLeg,shield,ultimateRing,boostRing,respawnRing,teamRing,barFill,label,drones,lastX:null,lastZ:null,phase:Math.random()*6,tint,groundRing,classId,colorHex:hex||DEFAULT_COLORS[0]};
+  const barGroup=new THREE.Group();barGroup.position.y=2.83;root.add(barGroup);
+  add(barGroup,new THREE.PlaneGeometry(1.2,.11),new THREE.MeshBasicMaterial({color:"#07111b",side:THREE.DoubleSide}),0,0,0);
+  const barFill=add(barGroup,new THREE.PlaneGeometry(1.08,.055),new THREE.MeshBasicMaterial({color:"#c5ff67",side:THREE.DoubleSide}),0,0,.008);
+  const label=withLabel?makeTextSprite("FIGHTER",hex||"#53eedc"):null;if(label){label.position.set(0,3.2,0);root.add(label);}
+  return {root,body,leftArm,rightArm,leftLeg,rightLeg,shield,ultimateRing,boostRing,respawnRing,teamRing,barGroup,barFill,label,drones,lastX:null,lastZ:null,phase:Math.random()*6,tint,groundRing,classId,skinId,colorHex:hex||DEFAULT_COLORS[0]};
 }
 function disposeTree(obj){if(!obj)return;obj.traverse(n=>{if(n.geometry)n.geometry.dispose();if(n.material){const mats=Array.isArray(n.material)?n.material:[n.material];mats.forEach(m=>{if(m.map)m.map.dispose();m.dispose();});}});}
 function makeBlock(parent,x,y,w,d,tint){
@@ -179,7 +180,7 @@ function createArena(canvas){
       const people=Object.values(state.players||{}),alive=new Set(people.map(p=>p.id));
       for(const [id,r] of fighters){if(!alive.has(id)){world.remove(r.root);disposeTree(r.root);fighters.delete(id);}}
       people.forEach((p)=>{
-        let r=fighters.get(p.id);if(r&&(r.classId!==(p.classId||"striker")||r.colorHex!==(p.color||DEFAULT_COLORS[0]))){world.remove(r.root);disposeTree(r.root);fighters.delete(p.id);r=null;}if(!r){r=makeFighter(p.classId||"striker",p.color,true);world.add(r.root);fighters.set(p.id,r);}
+        let r=fighters.get(p.id);if(r&&(r.classId!==(p.classId||"striker")||r.skinId!==(p.skinId||"standard")||r.colorHex!==(p.color||DEFAULT_COLORS[0]))){world.remove(r.root);disposeTree(r.root);fighters.delete(p.id);r=null;}if(!r){r=makeFighter(p.classId||"striker",p.color,p.skinId||"standard",true);world.add(r.root);fighters.set(p.id,r);}
         if(p.disconnected){r.root.visible=false;return;}
         const x=(p.x-600)/50,z=(p.y-380)/50,dx=r.lastX===null?0:p.x-r.lastX,dz=r.lastZ===null?0:p.y-r.lastZ,walk=clamp(Math.hypot(dx,dz)/4.2,0,1);
         r.lastX=p.x;r.lastZ=p.y;r.root.visible=true;r.body.visible=p.hp>0&&p.respawn<=0;
@@ -191,6 +192,7 @@ function createArena(canvas){
         r.ultimateRing.visible=(p.ultimate||0)>=99;r.ultimateRing.rotation.z=time*.65;
         r.boostRing.visible=(p.overdriveTimer||0)>0||(p.speedBoostTimer||0)>0;r.boostRing.rotation.z=-time*1.4;
         r.respawnRing.visible=p.respawn>0;r.respawnRing.rotation.z=time*2.4;
+        r.barGroup.visible=p.hp>0&&p.respawn<=0;r.barGroup.quaternion.copy(r.root.quaternion).invert().multiply(camera.quaternion);
         const ratio=clamp((p.hp||0)/(p.maxHp||100),0,1);r.barFill.scale.x=Math.max(.001,ratio);r.barFill.position.x=-.54+.54*ratio;r.barFill.material.color.set(ratio>.5?"#c5ff67":"#ff6688");
         if(r.label){r.label.visible=p.hp>0&&p.respawn<=0;if(r.label.material.map&&r.label.userData.name!==p.name){
           r.label.userData.name=p.name;const g=r.label.material.map.image.getContext("2d");g.clearRect(0,0,512,112);g.fillStyle="rgba(3,10,17,.78)";g.beginPath();if(g.roundRect)g.roundRect(5,7,502,98,18);else g.rect(5,7,502,98);g.fill();g.strokeStyle=p.color||"#53eedc";g.lineWidth=5;g.stroke();g.font="700 38px Arial";g.textAlign="center";g.textBaseline="middle";g.fillStyle="#f2fbff";g.shadowColor=p.color||"#53eedc";g.shadowBlur=12;g.fillText(String(p.name||"FIGHTER").slice(0,20),256,56);r.label.material.map.needsUpdate=true;
