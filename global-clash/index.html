@@ -24,6 +24,7 @@
       <button class="nav-link" data-view="loadout">LOADOUT</button>
       <button class="nav-link" data-view="social">FRIENDS</button>
       <button class="nav-link" data-view="leaderboard">RANKING</button>
+      <button class="nav-link" data-view="settings">SETTINGS</button>
     </nav>
     <div class="top-right">
       <div class="wallet"><span>◈</span><b id="headerCoins">0</b></div>
@@ -228,6 +229,26 @@
         <div class="card-panel"><div class="eyebrow">PROGRESSION</div><h3>LEVEL <span id="profileLevelBig">1</span></h3><div class="xp-track"><div id="profileXpBar"></div></div><div class="xp-caption"><span id="profileXpText">0 / 100 XP</span><b id="profileNextReward">+50 COINS NEXT LEVEL</b></div></div>
         <div class="card-panel"><div class="eyebrow">ACHIEVEMENTS</div><h3>BADGES & MILESTONES</h3><div id="achievementList" class="achievement-list"></div></div>
       </div>
+    </section>
+
+    <section class="view" id="view-settings">
+      <div class="page-title"><div class="eyebrow">PREFERENCES / 07</div><h1>TUNE YOUR <span>CONTROLS.</span></h1><p>Stelle Mausgefühl und Sound ein. Deine Einstellungen bleiben auf diesem Gerät gespeichert.</p></div>
+      <div class="settings-grid">
+        <article class="card-panel settings-panel">
+          <div class="eyebrow">CAMERA / MOUSE LOOK</div><h2>FIND YOUR <span>FEEL.</span></h2>
+          <label class="settings-control" for="mouseSensitivity"><span><b>MOUSE SENSITIVITY</b><small>Wie stark die Kamera auf Mausbewegungen reagiert.</small></span><output id="mouseSensitivityValue">1.0×</output></label>
+          <input class="settings-range" id="mouseSensitivity" type="range" min="0.5" max="2.5" step="0.1" value="1" aria-label="Mausempfindlichkeit">
+          <label class="settings-check" for="invertMouseY"><input id="invertMouseY" type="checkbox"><span><b>VERTIKALE ACHSE INVERTIEREN</b><small>Maus nach oben bewegt die Kamera nach unten.</small></span></label>
+          <div class="settings-note">ESC gibt den Mauszeiger frei. Das Mausrad verändert weiterhin den Kameraabstand.</div>
+        </article>
+        <article class="card-panel settings-panel settings-audio-panel">
+          <div class="eyebrow">AUDIO / FEEDBACK</div><h2>SET THE <span>VIBE.</span></h2>
+          <p>Schalte die kurzen Arena-Soundeffekte an oder aus.</p>
+          <button class="btn btn-outline" id="settingsSoundToggle">SFX ON</button>
+          <div class="settings-note">Die Steuerungs- und Audiooptionen werden nur in diesem Browser gespeichert.</div>
+        </article>
+      </div>
+      <div class="settings-footer"><span class="eyebrow">CONTROL PROFILE / LOCAL</span><button class="btn btn-outline" id="resetControls">RESET CONTROLS ↺</button></div>
     </section>
   </main>
 
