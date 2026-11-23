@@ -20,7 +20,7 @@ function makeTextSprite(text,tint){
   const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
   const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false}));sprite.scale.set(1.75,.39,1);return sprite;
 }
-function makeFighter(classId,hex,withLabel=true){
+function makeFighter(classId,hex,skinId="standard",withLabel=true){
   const tint=color(hex||DEFAULT_COLORS[0]),main=standard(tint,.62,.27,.38),mainDark=standard("#172b3a",.72,.31,.12),silver=standard("#9fb5c2",.82,.24,.12),dark=standard("#07111b",.46,.4,.04);
   const bright=new THREE.MeshStandardMaterial({color:tint,metalness:.25,roughness:.2,emissive:tint,emissiveIntensity:1.25});
   const root=new THREE.Group(),body=new THREE.Group();root.add(body);
@@ -62,6 +62,39 @@ function makeFighter(classId,hex,withLabel=true){
     add(extras,new THREE.BoxGeometry(.72,.26,.42),main,-.02,1.78,-.25);add(extras,new THREE.BoxGeometry(.22,.18,.08),bright,0,1.79,-.48);
   }else if(classId==="striker"){
     add(extras,new THREE.BoxGeometry(.24,.18,.26),silver,.63,1.05,.02);add(extras,new THREE.TorusGeometry(.19,.035,7,20),bright,.68,1.08,.1).rotation.x=Math.PI/2;add(extras,new THREE.BoxGeometry(.16,.34,.15),mainDark,-.58,1.57,-.04);
+  }
+  const skinAccent=standard(skinId==="solar"?"#ffe1a1":skinId==="ice"?"#e7fbff":skinId==="ember"?"#ffcf9e":skinId==="phantom"?"#27263f":skinId==="acid"?"#e5ff9a":skinId==="rose"?"#ffc1dc":skinId==="storm"?"#e3f6ff":skinId==="tide"?"#a8fff5":hex||"#53eedc",.64,.23,.62);
+  const skinDark=standard(skinId==="phantom"?"#15162c":"#152a38",.78,.28,.22);
+  if(skinId==="acid"){
+    [-1,1].forEach(side=>{const horn=add(extras,new THREE.ConeGeometry(.12,.48,6),skinAccent,side*.23,2.48,-.06);horn.rotation.z=side*-.22;});
+    add(extras,new THREE.BoxGeometry(.78,.13,.13),skinDark,0,1.91,-.31);
+  }else if(skinId==="rose"){
+    [-1,1].forEach(side=>{const wing=add(extras,new THREE.ConeGeometry(.24,.82,5),skinAccent,side*.55,1.66,-.2);wing.rotation.z=side*-.72;wing.rotation.x=-.4;});
+    add(extras,new THREE.TorusGeometry(.35,.045,7,24),skinAccent,0,2.37,-.03);
+  }else if(skinId==="violet"){
+    const hood=add(extras,new THREE.SphereGeometry(.43,12,10,0,Math.PI*2,0,Math.PI*.58),skinDark,0,2.13,-.05);
+    hood.scale.set(1.04,1.08,1.04);
+    add(extras,new THREE.TorusGeometry(.52,.035,7,28),skinAccent,0,2.15,-.02);
+  }else if(skinId==="solar"){
+    for(let i=0;i<5;i++){const a=(i-2)*.34;const fin=add(extras,new THREE.ConeGeometry(.10,.42,5),skinAccent,Math.sin(a)*.42,2.4,Math.cos(a)*.1);fin.rotation.z=-a;}
+    [-1,1].forEach(side=>{const pauldron=add(extras,new THREE.IcosahedronGeometry(.29,0),skinAccent,side*.57,1.66,0);pauldron.scale.set(1,.62,1.2);});
+  }else if(skinId==="ice"){
+    [-1,0,1].forEach((side)=>{const shard=add(extras,new THREE.OctahedronGeometry(.22,1),skinAccent,side*.32,1.75,-.4);shard.scale.set(.65,1.7,.65);shard.rotation.z=side*-.25;});
+    const crest=add(extras,new THREE.OctahedronGeometry(.24,1),skinAccent,0,2.46,-.08);crest.scale.set(.7,1.5,.7);
+  }else if(skinId==="storm"){
+    [-1,1].forEach(side=>{const coil=add(extras,new THREE.TorusGeometry(.22,.055,7,20),skinAccent,side*.59,1.67,0);coil.rotation.y=Math.PI/2;});
+    add(extras,new THREE.ConeGeometry(.1,.55,6),skinAccent,0,2.47,-.02);
+  }else if(skinId==="ember"){
+    [-1,1].forEach(side=>{const plate=add(extras,new THREE.BoxGeometry(.42,.3,.42),skinAccent,side*.55,1.64,-.03);plate.rotation.z=side*-.18;});
+    for(let i=-1;i<=1;i++){const spike=add(extras,new THREE.ConeGeometry(.09,.35,5),skinAccent,i*.22,2.42,-.22);spike.rotation.x=-.35;}
+  }else if(skinId==="phantom"){
+    const halo=add(extras,new THREE.TorusGeometry(.49,.045,8,32),skinAccent,0,2.53,-.05);halo.rotation.x=.38;
+    add(extras,new THREE.BoxGeometry(.56,.2,.1),skinDark,0,1.98,.28);
+    [-1,1].forEach(side=>{const cape=add(extras,new THREE.ConeGeometry(.35,.92,5),skinDark,side*.34,1.26,-.52);cape.rotation.x=Math.PI/2;cape.rotation.z=side*.24;});
+  }else if(skinId==="tide"){
+    [-1,1].forEach(side=>{const fin=add(extras,new THREE.ConeGeometry(.18,.72,6),skinAccent,side*.56,1.65,-.38);fin.rotation.z=side*-.7;fin.rotation.x=-.45;});
+    const visor=add(extras,new THREE.BoxGeometry(.52,.11,.06),skinAccent,0,2.1,.34);
+    add(extras,new THREE.TorusGeometry(.36,.035,7,28),skinAccent,0,2.38,-.06);
   }
   const groundRing=add(root,new THREE.TorusGeometry(.56,.035,8,36),bright,0,.075,0);groundRing.rotation.x=-Math.PI/2;
   const teamRing=add(root,new THREE.TorusGeometry(.7,.018,6,36),glowMaterial("#53eedc"),0,.045,0);teamRing.rotation.x=-Math.PI/2;
