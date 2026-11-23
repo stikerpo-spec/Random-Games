@@ -11,7 +11,8 @@ A neon-styled, fictional, non-graphic browser arena game inside the Random Games
 
 ### Arena modes
 - **Training Lab** — solo practice against a bot.
-- **Tournament Circuit** — beat three solo challengers in sequence.\n- **Survival** — survive escalating bot waves.
+- **Tournament Circuit** — beat three solo challengers in sequence.
+- **Survival** — survive escalating bot waves.
 - **Duel** — private online 1v1.
 - **Team Clash** — private online team match, two teams.
 - **Free For All** — private online match for up to four players.
@@ -21,7 +22,10 @@ A neon-styled, fictional, non-graphic browser arena game inside the Random Games
 ### Fighters and customization
 - Four selectable classes: Striker, Guardian, Runner and Technician.
 - Class differences affect health, movement speed, energy and regeneration.
-- Four arena maps: Neon Harbor, Sky Grid, Frostline and Ember Plaza.\n- Class-specific ultimate abilities charged through combat.\n- Pickups: repair cells, energy cells and ultimate charge.\n- Arena cover blocks stop player movement and energy pulses.
+- Four arena maps: Neon Harbor, Sky Grid, Frostline and Ember Plaza.
+- Class-specific ultimate abilities charged through combat.
+- Pickups: repair cells, energy cells and ultimate charge.
+- Arena cover blocks stop player movement and energy pulses.
 - Cosmetic visual styles that can be unlocked with earned coins.
 - Daily objectives, XP, levels, coins, local rank tiers and achievements.
 
@@ -40,6 +44,7 @@ The browser-to-browser connection uses PeerJS/WebRTC. The free PeerJS Cloud serv
 - Energy pulse: `J` or click
 - Dash: `Space`
 - Shield: `E`
+- Class ultimate: `Q` (charge it through combat)
 - Mobile: on-screen movement and action controls
 
 ## Local run
