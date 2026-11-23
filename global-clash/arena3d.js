@@ -190,7 +190,7 @@ function createArena(canvas){
     function exitPointerLock(){if(document.pointerLockElement===canvas&&document.exitPointerLock)document.exitPointerLock();}
     function lookBy(dx,dy){
       if(!Number.isFinite(dx)||!Number.isFinite(dy))return;
-      viewYaw-=dx*LOOK_SENSITIVITY;
+      viewYaw+=dx*LOOK_SENSITIVITY;
       viewPitch=clamp(viewPitch+dy*LOOK_SENSITIVITY*.78,-.12,.72);
     }
     function aimFromScreen(x,y){
