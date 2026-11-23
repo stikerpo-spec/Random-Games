@@ -66,3 +66,12 @@ Those global services require a persistent backend (and, for robust competitive 
 - This is a lightweight community prototype, not an anti-cheat competitive server.
 - Progress is stored locally and can be reset by clearing this site's browser storage.
 - No email, phone number or real-world name is required.
+
+
+## 3D character and arena renderer
+
+The match view now uses a real-time Three.js/WebGL renderer. Fighters are constructed from 3D meshes at runtime, with distinct class silhouettes and equipment for Striker, Guardian, Runner and Technician. Walk cycles, hover motion, shields, ultimate rings, projectiles, pickups, arena obstacles and the rotating Loadout preview are rendered in 3D.
+
+No external character model downloads are required: the character geometry is generated in global-clash/arena3d.js. Three.js is loaded from a CDN, so the first load requires an internet connection and a browser with WebGL enabled. If WebGL is unavailable, the earlier 2D renderer remains as a fallback.
+
+The existing gameplay simulation, keyboard/touch controls, game modes, private PeerJS rooms, and local profile progression remain in app.js. The multiplayer/network caveats described above still apply.
