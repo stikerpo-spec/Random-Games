@@ -505,7 +505,7 @@ function updateHost(dt){
       if(p.id===b.owner||p.disconnected||p.hp<=0||p.respawn>0)continue;
       if(game.mode==="teams"&&game.players[b.owner]&&game.players[b.owner].team===p.team)continue;
       if(Math.hypot(p.x-b.x,p.y-b.y)<22){
-        const damage=p.shieldTimer>0?b.damage*.25:b.damage;
+        const damage=p.shieldTimer>0?b.damage*p.shieldScale:b.damage;
         p.hp=Math.max(0,p.hp-damage);
         if(p.hp<=0)addKO(b.owner,p);
         consumed=true;break;
