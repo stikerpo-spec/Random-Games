@@ -71,3 +71,5 @@ body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 .skin-creator-actions .btn{flex:1}
 .skin-creator-note{margin-top:13px;color:#718895;font:7px var(--mono);letter-spacing:.14em}
 @media(max-width:720px){.skin-creator-head h3{font-size:24px}.skin-creator-actions .btn{min-width:135px}}
+
+.sprint-touch{border-color:#c5ff6780!important;color:#eaffb8!important}
