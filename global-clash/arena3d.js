@@ -252,10 +252,10 @@ function createPreview(container){
     add(scene,new THREE.CylinderGeometry(1.03,1.12,.18,48),standard("#172d3d",.78,.25,.25),0,-.02,0);
     const platformRing=add(scene,new THREE.TorusGeometry(1.04,.025,7,48),glowMaterial("#53eedc"),0,.08,0);platformRing.rotation.x=-Math.PI/2;
     const floor=add(scene,new THREE.CircleGeometry(2.6,48),new THREE.MeshBasicMaterial({color:"#112331",transparent:true,opacity:.42}),0,-.12,0);floor.rotation.x=-Math.PI/2;
-    let record=null,lastClass="",lastColor="";
+    let record=null,lastClass="",lastColor="",lastSkin="";
     function resize(){const w=Math.max(1,container.clientWidth),h=Math.max(1,container.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
     if(window.ResizeObserver)new ResizeObserver(resize).observe(container);else window.addEventListener("resize",resize);resize();
-    function setCharacter(classId,hex){if(record&&lastClass===classId&&lastColor===hex)return;if(record){scene.remove(record.root);disposeTree(record.root);}record=makeFighter(classId,hex,false);record.root.position.y=.12;scene.add(record.root);lastClass=classId;lastColor=hex;}
+    function setCharacter(classId,hex,skinId="standard"){if(record&&lastClass===classId&&lastColor===hex&&lastSkin===skinId)return;if(record){scene.remove(record.root);disposeTree(record.root);}record=makeFighter(classId,hex,skinId,false);record.root.position.y=.12;scene.add(record.root);lastClass=classId;lastColor=hex;lastSkin=skinId;}
     function animate(ms){
       if(!container.isConnected){renderer.dispose();return;}requestAnimationFrame(animate);
       if(container.clientWidth===0||container.clientHeight===0)return;const t=ms*.001;
