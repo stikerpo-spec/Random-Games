@@ -440,7 +440,7 @@ function getInput(){
 }
 function botInput(bot){
   const other=Object.values(game.players).filter(p=>p.id!==bot.id&&!p.disconnected&&p.hp>0);
-  const targets=other.filter(p=>game.mode!=="teams"||p.team!==bot.team);
+  const targets=other.filter(p=>!["teams","core"].includes(game.mode)||p.team!==bot.team);
   const target=(targets.length?targets:other).sort((a,b)=>Math.hypot(a.x-bot.x,a.y-bot.y)-Math.hypot(b.x-bot.x,b.y-bot.y))[0];
   let tx=600,ty=380,dist=0,ang=0;
   if(target){tx=target.x;ty=target.y;dist=Math.hypot(tx-bot.x,ty-bot.y);ang=Math.atan2(ty-bot.y,tx-bot.x);}
@@ -591,7 +591,7 @@ function updateHost(dt){
     const b=game.bullets[i];let consumed=false;
     for(const p of Object.values(game.players)){
       if(p.id===b.owner||p.disconnected||p.hp<=0||p.respawn>0)continue;
-      if(game.mode==="teams"&&game.players[b.owner]&&game.players[b.owner].team===p.team)continue;
+      if(["teams","core"].includes(game.mode)&&game.players[b.owner]&&game.players[b.owner].team===p.team)continue;
       if(Math.hypot(p.x-b.x,p.y-b.y)<22){
         const damage=p.shieldTimer>0?b.damage*.4*p.shieldScale:b.damage;
         p.hp=Math.max(0,p.hp-damage);
