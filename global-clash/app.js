@@ -526,8 +526,8 @@ function updateHost(dt){
           rival.name=["","SEMI-FINAL CHALLENGER","FINAL CHALLENGER"][game.tournamentRound-1];
           rival.classId=nextClass;rival.maxHp=stats.maxHp;rival.hp=stats.maxHp;rival.maxEnergy=stats.maxEnergy;rival.energy=stats.maxEnergy;
           rival.speed=stats.speed;rival.regen=stats.regen;rival.shieldScale=stats.shield;
-          player.score=0;player.kos=0;player.hp=player.maxHp;player.energy=player.maxEnergy;player.x=180;player.y=380;
-          rival.score=0;rival.kos=0;rival.deaths=0;rival.respawn=0;rival.x=1020;rival.y=380;
+          player.score=0;player.hp=player.maxHp;player.energy=player.maxEnergy;player.x=180;player.y=380;
+          rival.score=0;rival.deaths=0;rival.respawn=0;rival.x=1020;rival.y=380;
           game.bullets=[];game.elapsed=0;game.time=MODES.tournament.seconds;
           pushHostFeed("» ROUND "+(game.tournamentRound-1)+" CLEARED · NEXT CHALLENGER");
         }
@@ -567,6 +567,7 @@ function pushFeed(text){feedItems.unshift(String(text));feedItems=feedItems.slic
 function renderGame(){
   if(!game)return;
   $("gameClock").textContent=formatTime(game.time);
+  $("gameModeLabel").textContent=game.mode==="tournament"?"TOURNAMENT · ROUND "+game.tournamentRound+"/3":MODES[game.mode].name.toUpperCase();
   const entries=Object.values(game.players).filter(p=>!p.disconnected).sort((a,b)=>b.score-a.score);
   $("scoreboard").innerHTML="";
   entries.forEach(p=>{
