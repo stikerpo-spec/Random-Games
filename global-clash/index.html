@@ -162,6 +162,17 @@
             <div id="equippedCosmetic" class="equipped-cosmetic"></div>
             <button class="btn btn-outline" data-view="shop">OPEN COSMETIC STORE ↗</button>
           </div>
+          <div class="card-panel skin-creator" id="skinCreator">
+            <div class="skin-creator-head"><div><div class="eyebrow">OUTFIT LAB / YOUR DESIGN</div><h3>CREATE YOUR OWN SKIN.</h3><p>Eigene Farben, Rüstungsdetails und ein eigener Name. Deine Entwürfe bleiben auf diesem Gerät gespeichert.</p></div><span class="creator-stamp">CUSTOM<br>01</span></div>
+            <label class="skin-field skin-name-field"><span>SKIN NAME</span><input id="customSkinName" type="text" maxlength="18" value="MY CUSTOM SKIN" autocomplete="off"></label>
+            <div class="skin-palette-row">
+              <label class="skin-field"><span>MAIN ARMOUR</span><input id="customSkinPrimary" type="color" value="#53eedc"></label>
+              <label class="skin-field"><span>ENERGY ACCENT</span><input id="customSkinAccent" type="color" value="#ad91ff"></label>
+            </div>
+            <label class="skin-field"><span>ARMOUR TYPE</span><select id="customSkinStyle"><option value="vanguard">Vanguard · heavy plates</option><option value="runner">Runner · speed fins</option><option value="tech">Tech · orbit drones</option><option value="shadow">Shadow · hood & cape</option></select></label>
+            <div class="skin-creator-actions"><button class="btn btn-outline" id="randomSkin">RANDOMISE ↻</button><button class="btn btn-primary" id="saveCustomSkin">SAVE & EQUIP SKIN ✓</button></div>
+            <div class="skin-creator-note">CUSTOM SKINS ARE COSMETIC · NO GAMEPLAY ADVANTAGES</div>
+          </div>
         </div>
       </div>
     </section>
@@ -265,7 +276,7 @@
         <div class="sidebar-panel"><div class="sidebar-label">LIVE SCOREBOARD</div><div id="scoreboard" class="scoreboard"></div></div>
         <div class="sidebar-panel"><div class="sidebar-label">FIGHTER STATUS</div><div id="fighterStatus" class="fighter-status"></div></div>
         <div class="sidebar-panel"><div class="sidebar-label">ARENA FEED</div><div id="arenaFeed" class="arena-feed"></div></div>
-        <div class="game-controls"><b>WASD</b> MOVE RELATIVE TO CAMERA<br><b>MOUSE</b> AIM / LOOK · <b>CLICK</b> PULSE<br><b>SPACE</b> DASH · <b>E</b> SHIELD · <b>Q</b> ULTIMATE</div>
+        <div class="game-controls"><b>WASD</b> MOVE · <b>SHIFT</b> SPRINT<br><b>MOUSE</b> AIM / LOOK · <b>CLICK</b> PULSE<br><b>SPACE</b> DASH · <b>E</b> SHIELD · <b>Q</b> ULTIMATE</div>
       </aside>
     </div>
   </section>
