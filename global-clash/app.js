@@ -39,7 +39,7 @@ const MODES = {
 };
 function randomCode(){const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let out="";for(let i=0;i<6;i++)out+=chars[Math.floor(Math.random()*chars.length)];return out;}
 function defaultProfile(){
-  return {id:randomCode(),name:"PLAYER ONE",classId:"striker",skin:"standard",owned:["standard"],coins:150,xp:0,level:1,stats:{matches:0,wins:0,losses:0,kos:0,deaths:0,bestStreak:0,streak:0,bestScore:0,rankPoints:0},friends:[],history:[],daily:{date:"",progress:{matches:0,kos:0,wins:0},claimed:[]}};
+  return {id:randomCode(),name:"PLAYER ONE",classId:"striker",skin:"standard",owned:["standard"],customSkins:[],coins:150,xp:0,level:1,stats:{matches:0,wins:0,losses:0,kos:0,deaths:0,bestStreak:0,streak:0,bestScore:0,rankPoints:0},friends:[],history:[],daily:{date:"",progress:{matches:0,kos:0,wins:0},claimed:[]}};
 }
 function loadProfile(){
   try{
@@ -50,8 +50,13 @@ function loadProfile(){
     if(!Array.isArray(merged.owned))merged.owned=["standard"];
     if(!Array.isArray(merged.friends))merged.friends=[];
     if(!Array.isArray(merged.history))merged.history=[];
+    if(!Array.isArray(merged.customSkins))merged.customSkins=[];
+    merged.customSkins=merged.customSkins.filter(s=>s&&typeof s==="object"&&/^custom_[a-z0-9_-]{4,32}$/i.test(String(s.id||""))&&/^#[0-9a-f]{6}$/i.test(String(s.color||""))&&/^#[0-9a-f]{6}$/i.test(String(s.accent||""))).slice(0,40).map(s=>({id:String(s.id),name:cleanName(s.name||"CUSTOM SKIN").slice(0,18),color:s.color,accent:s.accent,style:["vanguard","runner","tech","shadow"].includes(s.style)?s.style:"vanguard",desc:"Your original custom outfit."}));
     if(!merged.owned.includes("standard"))merged.owned.unshift("standard");
-    if(!SKINS.some(s=>s.id===merged.skin && merged.owned.includes(s.id)))merged.skin="standard";
+    const validSkinIds=new Set([...SKINS.map(s=>s.id),...merged.customSkins.map(s=>s.id)]);
+    merged.owned=merged.owned.filter(id=>validSkinIds.has(id));
+    merged.customSkins.forEach(s=>{if(!merged.owned.includes(s.id))merged.owned.push(s.id);});
+    if(!validSkinIds.has(merged.skin)||!merged.owned.includes(merged.skin))merged.skin="standard";
     if(!CLASS[merged.classId])merged.classId="striker";
     return merged;
   }catch(e){return defaultProfile();}
@@ -89,7 +94,16 @@ const localStorageSafe={
 function save(){localStorageSafe.set(STORE,JSON.stringify(profile));renderAll();}
 function displayName(){return profile.name||"PLAYER";}
 function myCode(){return "GC-"+profile.id;}
-function skinColor(id=profile.skin){return (SKINS.find(x=>x.id===id)||SKINS[0]).color;}
+function skinInfo(id=profile.skin){return SKINS.find(x=>x.id===id)||profile.customSkins.find(x=>x.id===id)||SKINS[0];}
+function skinColor(id=profile.skin){return skinInfo(id).color;}
+function safeSkinData(data){
+  if(!data||typeof data!=="object")return null;
+  const validHex=v=>/^#[0-9a-f]{6}$/i.test(String(v||""));
+  const id=String(data.id||"custom_remote").slice(0,40);
+  if(!/^custom_[a-z0-9_-]{4,32}$/i.test(id)||!validHex(data.color)||!validHex(data.accent))return null;
+  return {id,name:cleanName(data.name||"CUSTOM SKIN").slice(0,18),color:data.color,accent:data.accent,style:["vanguard","runner","tech","shadow"].includes(data.style)?data.style:"vanguard",desc:"Custom outfit"};
+}
+function currentSkinData(){const skin=skinInfo();return {...skin};}
 function rankInfo(points=profile.stats.rankPoints){
   const ranks=[["BRONZE",0,500],["SILVER",500,1200],["GOLD",1200,2400],["PLATINUM",2400,4200],["DIAMOND",4200,7000],["MASTER",7000,11000],["GLOBAL ELITE",11000,Infinity]];
   let index=ranks.findIndex(r=>points>=r[1]&&points<r[2]);if(index<0)index=ranks.length-1;
