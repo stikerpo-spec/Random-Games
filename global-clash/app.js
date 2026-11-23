@@ -1,6 +1,8 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
+let authUser=null,authMode="login",authBusy=false;
+const accountAuth=window.GlobalClashAuth||null;
 const STORE = "globalClash.v2";
 const COLORS = ["#53eedc", "#c5ff67", "#ff6688", "#ad91ff"];
 const CLASS = {
@@ -106,6 +108,136 @@ function renderSettings(){
   $("mouseSensitivityValue").textContent=controlSettings.sensitivity.toFixed(1)+"×";
   invert.checked=controlSettings.invertY;
   updateSoundButton();
+  renderAccountState();
+}
+function authFeedback(message,kind="info"){
+  const box=$("authFeedback");box.textContent=message;box.dataset.kind=kind;
+}
+function setAuthMode(mode){
+  authMode=mode;
+  document.querySelectorAll("[data-auth-mode]").forEach(button=>button.classList.toggle("active",button.dataset.authMode===mode));
+  $("authPasswordLabel").textContent=mode==="recovery"?"NEW PASSWORD":"PASSWORD";
+  $("authPassword").autocomplete=mode==="recovery"?"new-password":mode==="signup"?"new-password":"current-password";
+  $("authSignupOptions").classList.toggle("hidden",mode!=="signup");
+  $("forgotPassword").classList.toggle("hidden",mode!=="login");
+  $("authModeSwitch").classList.toggle("hidden",mode==="recovery");
+  $("authSubmit").textContent=mode==="signup"?"CREATE ACCOUNT":mode==="recovery"?"SAVE NEW PASSWORD":"SIGN IN";
+  $("authPasswordHelp").textContent="Mindestens 8 Zeichen.";
+  $("authPassword").value="";
+  authFeedback(mode==="signup"?"Du bekommst eine Bestätigungs-Mail an deine Adresse.":mode==="recovery"?"Lege ein neues Passwort fest.":"Melde dich mit deiner E-Mail-Adresse an.");
+}
+function accountConfigured(){return !!(accountAuth&&accountAuth.ready);}
+function openAccountModal(mode="login"){
+  $("accountModal").classList.add("open");
+  setAuthMode(mode);
+  if(!accountConfigured())authFeedback(accountAuth&&accountAuth.message?accountAuth.message:"Der Account-Server ist noch nicht eingerichtet. Die Einrichtung steht in global-clash/README.md.","error");
+}
+function renderAccountState(){
+  const state=$("accountState"),email=$("accountEmail"),toggle=$("updateEmailOptIn");
+  const signIn=$("accountSettingsSignIn"),signOut=$("accountSignOut"),hint=$("updateEmailHint");
+  const confirmed=!!(authUser&&(authUser.email_confirmed_at||authUser.confirmed_at));
+  const configured=accountConfigured();
+  $("accountButton").textContent=authUser?"ACCOUNT ✓":"ACCOUNT";
+  signIn.classList.toggle("hidden",!!authUser);
+  signOut.classList.toggle("hidden",!authUser);
+  if(!configured){
+    state.textContent="BACKEND NOT CONNECTED";
+    email.textContent="Noch kein Account-Server konfiguriert.";
+    toggle.checked=false;toggle.disabled=true;
+    hint.textContent=accountAuth&&accountAuth.message?accountAuth.message:"Supabase-Konfiguration fehlt. Siehe README.";
+  }else if(!authUser){
+    state.textContent="NOT SIGNED IN";
+    email.textContent="Erstelle einen Account oder melde dich an.";
+    toggle.checked=false;toggle.disabled=true;
+    hint.textContent="Melde dich an, um Update-Mails zu verwalten.";
+  }else{
+    state.textContent=confirmed?"ACCOUNT VERIFIED":"EMAIL VERIFICATION NEEDED";
+    email.textContent=authUser.email||"";
+    toggle.checked=authUser.user_metadata?.update_emails===true;
+    toggle.disabled=!confirmed;
+    hint.textContent=confirmed
+      ?"Du erhältst neue Release-Mails nur, wenn dieser Schalter aktiv ist. Du kannst ihn jederzeit ausschalten."
+      :"Bestätige zuerst deine E-Mail-Adresse. Danach kannst du Update-Mails aktivieren.";
+  }
+}
+function friendlyAuthError(error){
+  const message=String(error&&error.message||"Unbekannter Fehler.");
+  const lower=message.toLowerCase();
+  if(lower.includes("invalid login credentials"))return "E-Mail-Adresse oder Passwort ist nicht korrekt.";
+  if(lower.includes("email not confirmed"))return "Bitte bestätige zuerst deine E-Mail-Adresse über den Link in deinem Postfach.";
+  if(lower.includes("user already registered"))return "Für diese E-Mail-Adresse gibt es bereits einen Account. Melde dich an.";
+  if(lower.includes("password")&&lower.includes("least"))return "Das Passwort ist zu kurz. Verwende mindestens 8 Zeichen.";
+  if(lower.includes("rate limit"))return "Zu viele Versuche. Bitte probiere es später erneut.";
+  return message;
+}
+async function submitAccountForm(event){
+  event.preventDefault();
+  const email=$("authEmail").value.trim().toLowerCase(),password=$("authPassword").value;
+  if(!accountConfigured()){authFeedback(accountAuth&&accountAuth.message||"Der Account-Server ist noch nicht eingerichtet.","error");return;}
+  if(!email||!password){authFeedback("Bitte E-Mail-Adresse und Passwort ausfüllen.","error");return;}
+  if(password.length<8){authFeedback("Das Passwort muss mindestens 8 Zeichen lang sein.","error");return;}
+  if(authBusy)return;
+  authBusy=true;$("authSubmit").disabled=true;
+  try{
+    let result;
+    if(authMode==="signup"){
+      result=await accountAuth.signUp(email,password,$("signupUpdateEmails").checked);
+      if(result.error)throw result.error;
+      if(result.data&&result.data.session){
+        authFeedback("Account erstellt und angemeldet. Deine E-Mail ist bestätigt.","success");
+      }else{
+        authFeedback("Fast geschafft! Öffne die Bestätigungs-Mail von GLOBAL CLASH und klicke auf den Link. Erst danach kannst du dich anmelden.","success");
+      }
+    }else if(authMode==="recovery"){
+      result=await accountAuth.updatePassword(password);
+      if(result.error)throw result.error;
+      setAuthMode("login");
+      authFeedback("Dein Passwort wurde geändert. Du kannst dich jetzt anmelden.","success");
+    }else{
+      result=await accountAuth.signIn(email,password);
+      if(result.error)throw result.error;
+      authFeedback("Du bist angemeldet. Willkommen zurück!","success");
+      renderAccountState();
+    }
+  }catch(error){authFeedback(friendlyAuthError(error),"error");}
+  finally{authBusy=false;$("authSubmit").disabled=false;}
+}
+async function requestPasswordReset(){
+  const email=$("authEmail").value.trim().toLowerCase();
+  if(!email){authFeedback("Gib zuerst deine E-Mail-Adresse ein.","error");$("authEmail").focus();return;}
+  if(!accountConfigured()){authFeedback("Der Account-Server ist noch nicht eingerichtet.","error");return;}
+  try{
+    const result=await accountAuth.sendPasswordReset(email);
+    if(result.error)throw result.error;
+    authFeedback("Falls ein Account zu dieser Adresse gehört, wurde eine Mail zum Zurücksetzen des Passworts gesendet.","success");
+  }catch(error){authFeedback(friendlyAuthError(error),"error");}
+}
+async function changeUpdateEmailPreference(enabled){
+  if(!accountConfigured()||!authUser)return;
+  const confirmed=!!(authUser.email_confirmed_at||authUser.confirmed_at);
+  if(!confirmed){renderAccountState();return;}
+  $("updateEmailOptIn").disabled=true;
+  try{
+    const result=await accountAuth.setUpdateEmails(enabled);
+    if(result.error)throw result.error;
+    if(result.data&&result.data.user)authUser=result.data.user;
+    toast(enabled?"UPDATE EMAILS ENABLED":"UPDATE EMAILS DISABLED");
+  }catch(error){toast("SETTING NOT SAVED");}
+  finally{renderAccountState();}
+}
+function initAccountUI(){
+  if(accountAuth&&typeof accountAuth.onChange==="function"){
+    accountAuth.onChange((event,user)=>{
+      authUser=user||null;
+      renderAccountState();
+      if(event==="PASSWORD_RECOVERY"){
+        openAccountModal("recovery");
+        authFeedback("Lege jetzt ein neues Passwort für deinen Account fest.");
+      }else if(event==="SIGNED_IN"){
+        authFeedback("Anmeldung erfolgreich.","success");
+      }
+    });
+  }
 }
 function save(){localStorageSafe.set(STORE,JSON.stringify(profile));renderAll();}
 function displayName(){return profile.name||"PLAYER";}
@@ -943,6 +1075,18 @@ function attachEvents(){
   $("mouseSensitivity").addEventListener("input",e=>{controlSettings.sensitivity=Math.min(2.5,Math.max(.5,Number(e.target.value)||1));$("mouseSensitivityValue").textContent=controlSettings.sensitivity.toFixed(1)+"×";persistControlSettings();});
   $("invertMouseY").addEventListener("change",e=>{controlSettings.invertY=e.target.checked;persistControlSettings();});
   $("resetControls").addEventListener("click",()=>{controlSettings={...CONTROL_DEFAULTS};persistControlSettings();renderSettings();toast("CONTROL SETTINGS RESET");});
+  $("accountButton").addEventListener("click",()=>openAccountModal("login"));
+  $("accountSettingsSignIn").addEventListener("click",()=>openAccountModal("login"));
+  $("accountSignOut").addEventListener("click",async()=>{
+    if(!accountConfigured())return;
+    const result=await accountAuth.signOut();
+    if(result.error)toast("SIGN OUT FAILED");else{authUser=null;renderAccountState();toast("SIGNED OUT");}
+  });
+  $("accountForm").addEventListener("submit",submitAccountForm);
+  document.querySelectorAll("[data-auth-mode]").forEach(button=>button.addEventListener("click",()=>setAuthMode(button.dataset.authMode)));
+  $("forgotPassword").addEventListener("click",requestPasswordReset);
+  $("updateEmailOptIn").addEventListener("change",event=>changeUpdateEmailPreference(event.target.checked));
+  $("accountModal").addEventListener("click",event=>{if(event.target===$("accountModal"))closeModal("accountModal");});
   $("endToMenu").addEventListener("click",leaveMatch);
   $("rematchButton").addEventListener("click",rematch);
   $("addFriendForm").addEventListener("submit",e=>{e.preventDefault();addFriend($("friendCodeInput").value);$("friendCodeInput").value="";});
@@ -1022,5 +1166,5 @@ function frame(now){
   }
   requestAnimationFrame(frame);
 }
-dailyReset();attachEvents();renderModeSelection();renderAll();renderLoadout();requestAnimationFrame(frame);
+dailyReset();attachEvents();initAccountUI();renderAccountState();renderModeSelection();renderAll();renderLoadout();requestAnimationFrame(frame);
 })();
