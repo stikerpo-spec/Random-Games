@@ -178,7 +178,30 @@ function createArena(canvas){
     const vA=new THREE.Vector3(0,1,0),vB=new THREE.Vector3();
     const desiredCamera=new THREE.Vector3(),desiredLook=new THREE.Vector3(),lookTarget=new THREE.Vector3(0,1.3,0);
     const aimPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0),raycaster=new THREE.Raycaster(),ndc=new THREE.Vector2();
-    let cameraReady=false;
+    let cameraReady=false,followedPlayerId=null,viewYaw=0,viewPitch=.28,pointerLocked=false;
+    const LOOK_SENSITIVITY=.00235,CAMERA_DISTANCE=7.2;
+    function isPointerLocked(){return document.pointerLockElement===canvas;}
+    function requestPointerLock(){
+      if(!canvas.requestPointerLock)return Promise.reject(new Error("Pointer lock is not supported by this browser."));
+      try{const result=canvas.requestPointerLock();return result&&typeof result.then==="function"?result:Promise.resolve();}
+      catch(error){return Promise.reject(error);}
+    }
+    function exitPointerLock(){if(document.pointerLockElement===canvas&&document.exitPointerLock)document.exitPointerLock();}
+    function lookBy(dx,dy){
+      if(!Number.isFinite(dx)||!Number.isFinite(dy))return;
+      viewYaw-=dx*LOOK_SENSITIVITY;
+      viewPitch=clamp(viewPitch+dy*LOOK_SENSITIVITY*.78,-.12,.72);
+    }
+    function aimFromScreen(x,y){
+      ndc.set(x,y);raycaster.setFromCamera(ndc,camera);
+      const hit=raycaster.ray.intersectPlane(aimPlane,new THREE.Vector3());
+      if(!hit)return {x:600,y:380};
+      return {x:clamp(600+hit.x*50,0,1200),y:clamp(380+hit.z*50,0,760)};
+    }
+    function getAimPoint(){return aimFromScreen(0,0);}
+    function onPointerLockChange(){pointerLocked=isPointerLocked();stage.classList.toggle("pointer-locked",pointerLocked);}
+    document.addEventListener("pointerlockchange",onPointerLockChange);
+    document.addEventListener("pointerlockerror",()=>{pointerLocked=false;stage.classList.remove("pointer-locked");});
     function resize(){
       const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);
       camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);
@@ -247,11 +270,14 @@ function createArena(canvas){
       const players=Object.values(state.players||{});
       const p=state.players&&state.players[localId]&&!state.players[localId].disconnected?state.players[localId]:players.find(item=>!item.disconnected);
       if(!p)return;
-      const angle=p.angle||0,fx=Math.cos(angle),fz=Math.sin(angle),sx=-fz,sz=fx;
+      if(followedPlayerId!==p.id){followedPlayerId=p.id;viewYaw=p.angle||0;viewPitch=.28;cameraReady=false;}
+      const fx=Math.cos(viewYaw),fz=Math.sin(viewYaw),sx=-fz,sz=fx;
       const px=(p.x-600)/50,pz=(p.y-380)/50;
-      desiredCamera.set(px-fx*6.3+sx*.88,p.input&&p.input.sprint?5.35:5.15,pz-fz*6.3+sz*.88);
-      desiredLook.set(px+fx*2.8,1.35,pz+fz*2.8);
-      const targetFov=p.input&&p.input.sprint?58:54;camera.fov+=(targetFov-camera.fov)*.12;camera.updateProjectionMatrix();
+      const sprinting=!!(p.input&&p.input.sprint),distance=CAMERA_DISTANCE+(sprinting?.28:0);
+      const horizontal=Math.cos(viewPitch)*distance,vertical=Math.sin(viewPitch)*distance;
+      desiredCamera.set(px-fx*horizontal+sx*.88,1.45+vertical,pz-fz*horizontal+sz*.88);
+      desiredLook.set(px+fx*3.1,1.28,pz+fz*3.1);
+      const targetFov=sprinting?59:54;camera.fov+=(targetFov-camera.fov)*.12;camera.updateProjectionMatrix();
       if(!cameraReady){camera.position.copy(desiredCamera);lookTarget.copy(desiredLook);cameraReady=true;}
       else{const smooth=1-Math.exp(-8/60);camera.position.lerp(desiredCamera,smooth);lookTarget.lerp(desiredLook,smooth);}
       camera.lookAt(lookTarget);
@@ -264,8 +290,8 @@ function createArena(canvas){
       (world.userData.coreObjects||[]).forEach(o=>{if(o.geometry&&o.geometry.type==="OctahedronGeometry"){o.rotation.y=time*.7;o.rotation.x=Math.sin(time)*.1;}});
       renderer.render(scene,camera);
     }
-    function pointerToGame(clientX,clientY,rect){ndc.set(((clientX-rect.left)/rect.width)*2-1,-(((clientY-rect.top)/rect.height)*2-1));raycaster.setFromCamera(ndc,camera);const point=raycaster.ray.intersectPlane(aimPlane,new THREE.Vector3());if(!point)return {x:600,y:380};return {x:clamp(600+point.x*50,0,1200),y:clamp(380+point.z*50,0,760)};}
-    return {update,resize,renderer,pointerToGame,dispose(){renderer.dispose();renderer.domElement.remove();canvas.classList.remove("legacy-arena-canvas");}};
+    function pointerToGame(clientX,clientY,rect){return aimFromScreen(((clientX-rect.left)/rect.width)*2-1,-(((clientY-rect.top)/rect.height)*2-1));}
+    return {update,resize,renderer,pointerToGame,getAimPoint,look:lookBy,requestPointerLock,exitPointerLock,isPointerLocked,dispose(){exitPointerLock();document.removeEventListener("pointerlockchange",onPointerLockChange);renderer.dispose();renderer.domElement.remove();canvas.classList.remove("legacy-arena-canvas");stage.classList.remove("pointer-locked");}};
   }catch(error){console.warn("GLOBAL CLASH 3D renderer unavailable; using 2D fallback.",error);return null;}
 }
 
