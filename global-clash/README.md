@@ -105,6 +105,8 @@ The Settings page adds a persistent mouse-sensitivity slider (0.5×–2.5×), op
 4. Set the Site URL to `https://stikerpo-spec.github.io/Random-Games/global-clash/` and add that same address as an allowed redirect URL.
 5. Configure a custom SMTP provider for Auth confirmation and password-reset emails. Supabase's built-in sender is for testing: it only sends to pre-authorized team addresses and is limited to 2 messages per hour. A custom SMTP provider is required for normal users.
 
+   If you use Resend for this, its SMTP settings are: host `smtp.resend.com`, username `resend`, port `465` or `587`, and your Resend API key as the SMTP password. The From address must use the domain you verified with Resend.
+
 The Account button opens sign-up/sign-in, sends the email confirmation request, supports password reset and keeps the Auth session in the browser. Update announcements are opt-in and can be switched off again in Settings. Only verified email accounts are eligible.
 
 ### 2. Configure update announcements
