@@ -92,3 +92,5 @@ body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 .pause-panel small{display:block;margin-top:19px;color:#7e98a6;font:8px var(--mono);letter-spacing:.16em}
 .arena-reticle{transition:opacity .12s}
 @media(max-width:720px){.pause-panel{padding:23px 18px}.pause-panel h2{font-size:42px}}
+
+.arena-stage{overscroll-behavior:contain}
