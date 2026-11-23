@@ -21,7 +21,7 @@ A neon-styled, fictional, non-graphic browser arena game inside the Random Games
 ### Fighters and customization
 - Four selectable classes: Striker, Guardian, Runner and Technician.
 - Class differences affect health, movement speed, energy and regeneration.
-- Four arena maps: Neon Harbor, Sky Grid, Frostline and Ember Plaza.
+- Four arena maps: Neon Harbor, Sky Grid, Frostline and Ember Plaza.\n- Class-specific ultimate abilities charged through combat.\n- Pickups: repair cells, energy cells and ultimate charge.\n- Arena cover blocks stop player movement and energy pulses.
 - Cosmetic visual styles that can be unlocked with earned coins.
 - Daily objectives, XP, levels, coins, local rank tiers and achievements.
 
