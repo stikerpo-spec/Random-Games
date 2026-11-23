@@ -843,7 +843,7 @@ function drawArena(){
 }
 function handleMatchEnd(){
   if(endHandled||!game||game.phase!=="ended")return;
-  endHandled=true;
+  endHandled=true;gamePaused=false;$("gamePauseOverlay").classList.add("hidden");if(arena3d)arena3d.exitPointerLock();
   const me=game.players[myId];if(!me)return;
   const winner=game.winner;
   let won=false;
@@ -964,6 +964,7 @@ canvas.addEventListener("pointercancel",()=>pointerDown=false);
 canvas.parentElement.addEventListener("wheel",e=>{if(arena3d&&$("gameScreen").classList.contains("open")){e.preventDefault();arena3d.zoom(e.deltaY);}}, {passive:false});
 document.addEventListener("pointerlockchange",()=>{
   if(!$("gameScreen").classList.contains("open")||!game)return;
+  if(game.phase==="ended"){$("gamePauseOverlay").classList.add("hidden");return;}
   const locked=!!(arena3d&&arena3d.isPointerLocked());
   if(locked){
     pointerLockUnavailable=false;gamePaused=false;$("gamePauseOverlay").classList.add("hidden");
