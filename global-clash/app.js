@@ -78,6 +78,7 @@ let touchState={};
 const canvas=$("arenaCanvas"),ctx=canvas.getContext("2d");
 const arena3d=window.GlobalClash3D?window.GlobalClash3D.createArena(canvas):null;
 const preview3d=window.GlobalClash3D?window.GlobalClash3D.createPreview($("previewAvatar")):null;
+if(!arena3d){const renderBadge=document.querySelector(".render-badge");if(renderBadge)renderBadge.style.display="none";}
 const localStorageSafe={
   set(key,value){try{localStorage.setItem(key,value);}catch(e){}}
 };
