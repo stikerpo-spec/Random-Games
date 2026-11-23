@@ -65,6 +65,13 @@ let profile=loadProfile();
 let selectedMode="training",selectedMap="neon";
 let peer=null,hostConn=null,connections=[],role="",roomCode="",myId="",lobbyPlayers=[],game=null;
 let keys={},mouse={x:600,y:380},pointerDown=false,gamePaused=false,pointerLockUnavailable=false,lastFrame=performance.now(),lastSend=0,lastInput=0,lastHudUpdate=0,lastTouchAim=0,feedItems=[],endHandled=false;
+const CONTROL_STORE="globalClash.controls.v1";
+const CONTROL_DEFAULTS={sensitivity:1,invertY:false};
+function readControlSettings(){
+  try{const saved=JSON.parse(localStorage.getItem(CONTROL_STORE)||"null")||{};const value=Number(saved.sensitivity);return {sensitivity:Number.isFinite(value)?Math.min(2.5,Math.max(.5,value)):1,invertY:saved.invertY===true};}
+  catch(e){return {...CONTROL_DEFAULTS};}
+}
+let controlSettings=readControlSettings();
 let audioContext=null,soundEnabled=true;
 try{soundEnabled=localStorage.getItem("globalClashSfx")!=="off";}catch(e){}
 function playSfx(kind){
@@ -82,15 +89,24 @@ function playSfx(kind){
     osc.connect(gain);gain.connect(audioContext.destination);osc.start(now);osc.stop(now+duration+.025);
   }catch(e){}
 }
-function updateSoundButton(){const button=$("soundToggle");if(button)button.textContent=soundEnabled?"SFX ON":"SFX OFF";}
+function updateSoundButton(){const label=soundEnabled?"SFX ON":"SFX OFF";const button=$("soundToggle"),settingsButton=$("settingsSoundToggle");if(button)button.textContent=label;if(settingsButton)settingsButton.textContent=label;}
 let touchState={};
 const canvas=$("arenaCanvas"),ctx=canvas.getContext("2d");
 const arena3d=window.GlobalClash3D?window.GlobalClash3D.createArena(canvas):null;
 const preview3d=window.GlobalClash3D?window.GlobalClash3D.createPreview($("previewAvatar")):null;
+if(arena3d&&arena3d.setLookSettings)arena3d.setLookSettings(controlSettings);
 if(!arena3d){const renderBadge=document.querySelector(".render-badge");if(renderBadge)renderBadge.style.display="none";}
 const localStorageSafe={
   set(key,value){try{localStorage.setItem(key,value);}catch(e){}}
 };
+function persistControlSettings(){try{localStorage.setItem(CONTROL_STORE,JSON.stringify(controlSettings));}catch(e){}if(arena3d&&arena3d.setLookSettings)arena3d.setLookSettings(controlSettings);}
+function renderSettings(){
+  const sensitivity=$("mouseSensitivity"),invert=$("invertMouseY");
+  sensitivity.value=String(controlSettings.sensitivity);
+  $("mouseSensitivityValue").textContent=controlSettings.sensitivity.toFixed(1)+"×";
+  invert.checked=controlSettings.invertY;
+  updateSoundButton();
+}
 function save(){localStorageSafe.set(STORE,JSON.stringify(profile));renderAll();}
 function displayName(){return profile.name||"PLAYER";}
 function myCode(){return "GC-"+profile.id;}
@@ -138,6 +154,7 @@ function setView(view){
   if(view==="leaderboard")renderLeaderboard();
   if(view==="shop")renderShop();
   if(view==="profile")renderProfile();
+  if(view==="settings")renderSettings();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 function renderHeader(){
@@ -920,7 +937,12 @@ function attachEvents(){
   $("leaveMatch").addEventListener("click",leaveMatch);
   $("resumeMatchButton").addEventListener("click",resumeMatch);
   $("pauseToMenuButton").addEventListener("click",leaveMatch);
-  $("soundToggle").addEventListener("click",()=>{soundEnabled=!soundEnabled;try{localStorage.setItem("globalClashSfx",soundEnabled?"on":"off");}catch(e){}updateSoundButton();if(soundEnabled)playSfx("start");});
+  const toggleSound=()=>{soundEnabled=!soundEnabled;try{localStorage.setItem("globalClashSfx",soundEnabled?"on":"off");}catch(e){}updateSoundButton();if(soundEnabled)playSfx("start");};
+  $("soundToggle").addEventListener("click",toggleSound);
+  $("settingsSoundToggle").addEventListener("click",toggleSound);
+  $("mouseSensitivity").addEventListener("input",e=>{controlSettings.sensitivity=Math.min(2.5,Math.max(.5,Number(e.target.value)||1));$("mouseSensitivityValue").textContent=controlSettings.sensitivity.toFixed(1)+"×";persistControlSettings();});
+  $("invertMouseY").addEventListener("change",e=>{controlSettings.invertY=e.target.checked;persistControlSettings();});
+  $("resetControls").addEventListener("click",()=>{controlSettings={...CONTROL_DEFAULTS};persistControlSettings();renderSettings();toast("CONTROL SETTINGS RESET");});
   $("endToMenu").addEventListener("click",leaveMatch);
   $("rematchButton").addEventListener("click",rematch);
   $("addFriendForm").addEventListener("submit",e=>{e.preventDefault();addFriend($("friendCodeInput").value);$("friendCodeInput").value="";});
