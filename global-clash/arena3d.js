@@ -186,7 +186,8 @@ function createArena(canvas){
       (world.userData.coreObjects||[]).forEach(o=>{if(o.geometry&&o.geometry.type==="OctahedronGeometry"){o.rotation.y=time*.7;o.rotation.x=Math.sin(time)*.1;}});
       renderer.render(scene,camera);
     }
-    return {update,resize,renderer,dispose(){renderer.dispose();renderer.domElement.remove();canvas.classList.remove("legacy-arena-canvas");}};
+    function pointerToGame(clientX,clientY,rect){const d=new THREE.Vector3().subVectors(new THREE.Vector3(0,0,0),camera.position).normalize();const up=camera.up.clone().addScaledVector(d,-camera.up.dot(d)).normalize();const zScale=Math.max(.1,Math.abs(up.z));const worldW=camera.right-camera.left,worldH=camera.top-camera.bottom;return {x:clamp(600+(clientX-rect.left-rect.width/2)*50*worldW/rect.width,0,1200),y:clamp(380+(clientY-rect.top-rect.height/2)*50*worldH/(zScale*rect.height),0,760)};}
+    return {update,resize,renderer,pointerToGame,dispose(){renderer.dispose();renderer.domElement.remove();canvas.classList.remove("legacy-arena-canvas");}};
   }catch(error){console.warn("GLOBAL CLASH 3D renderer unavailable; using 2D fallback.",error);return null;}
 }
 
