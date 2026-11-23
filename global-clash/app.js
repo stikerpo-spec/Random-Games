@@ -432,19 +432,30 @@ function pushFeed(text){
 function cleanInput(input){
   input=input||{};
   const number=(v,def)=>Number.isFinite(Number(v))?Math.max(0,Math.min(1200,Number(v))):def;
-  return {up:!!input.up,down:!!input.down,left:!!input.left,right:!!input.right,attack:!!input.attack,dash:!!input.dash,shield:!!input.shield,ultimate:!!input.ultimate,aimX:number(input.aimX,600),aimY:number(input.aimY,380)};
+  const move=v=>typeof v==="number"&&Number.isFinite(v)?Math.max(-1,Math.min(1,v)):null;
+  return {up:!!input.up,down:!!input.down,left:!!input.left,right:!!input.right,moveX:move(input.moveX),moveY:move(input.moveY),attack:!!input.attack,dash:!!input.dash,shield:!!input.shield,ultimate:!!input.ultimate,aimX:number(input.aimX,600),aimY:number(input.aimY,380)};
 }
 function getInput(){
   let aimX=mouse.x,aimY=mouse.y;
   const coarse=window.matchMedia&&window.matchMedia("(pointer: coarse)").matches;
   if(coarse&&performance.now()-lastTouchAim>1600&&game&&game.players[myId]){
     const me=game.players[myId];
-    const targets=Object.values(game.players).filter(p=>p.id!==myId&&!p.disconnected&&p.hp>0&&p.respawn<=0&&(game.mode!=="teams"||p.team!==me.team));
+    const targets=Object.values(game.players).filter(p=>p.id!==myId&&!p.disconnected&&p.hp>0&&p.respawn<=0&&(!["teams","core"].includes(game.mode)||p.team!==me.team));
     const target=targets.sort((a,b)=>Math.hypot(a.x-me.x,a.y-me.y)-Math.hypot(b.x-me.x,b.y-me.y))[0];
     if(target){aimX=target.x;aimY=target.y;}
   }
-  return cleanInput({
-    up:keys.w||keys.arrowup||touchState.w,down:keys.s||keys.arrowdown||touchState.s,left:keys.a||keys.arrowleft||touchState.a,right:keys.d||keys.arrowright||touchState.d,
+  const up=!!(keys.w||keys.arrowup||touchState.w),down=!!(keys.s||keys.arrowdown||touchState.s);
+  const left=!!(keys.a||keys.arrowleft||touchState.a),right=!!(keys.d||keys.arrowright||touchState.d);
+  let moveX=null,moveY=null;
+  const me=game&&game.players[myId];
+  if(me){
+    const look=Math.atan2(aimY-me.y,aimX-me.x);
+    const forward=(up?1:0)-(down?1:0),strafe=(right?1:0)-(left?1:0);
+    moveX=Math.cos(look)*forward-Math.sin(look)*strafe;
+    moveY=Math.sin(look)*forward+Math.cos(look)*strafe;
+    const magnitude=Math.hypot(moveX,moveY)||1;moveX/=magnitude;moveY/=magnitude;
+  }
+  return cleanInput({up,down,left,right,moveX,moveY,
     attack:keys.j||pointerDown||touchState.j,dash:keys[" "]||touchState[" "],shield:keys.e||touchState.e,ultimate:keys.q||touchState.q,aimX,aimY
   });
 }
@@ -583,11 +594,12 @@ function updateHost(dt){
     if(input.ultimate&&p.ultimate>=100&&p.ultimateCooldown<=0)activateUltimate(p);
     if(p.respawn>0){p.respawn-=dt;if(p.respawn<=0){const idx=Object.keys(game.players).indexOf(p.id);const pos=spawnPositions(idx);p.x=pos.x;p.y=pos.y;p.hp=p.maxHp;p.energy=p.maxEnergy*.65;}return;}
     if(p.hp<=0)return;
-    let dx=(input.right?1:0)-(input.left?1:0),dy=(input.down?1:0)-(input.up?1:0);
+    let dx=input.moveX===null?((input.right?1:0)-(input.left?1:0)):input.moveX;
+    let dy=input.moveY===null?((input.down?1:0)-(input.up?1:0)):input.moveY;
     const length=Math.hypot(dx,dy)||1;dx/=length;dy/=length;
     p.angle=Math.atan2(input.aimY-p.y,input.aimX-p.x);
     if(input.dash&&p.dashCooldown<=0&&p.energy>=22){
-      const vx=dx||Math.cos(p.angle),vy=dy||Math.sin(p.angle),len=Math.hypot(vx,vy)||1;
+      const moving=Math.hypot(dx,dy)>0.001,vx=moving?dx:Math.cos(p.angle),vy=moving?dy:Math.sin(p.angle),len=Math.hypot(vx,vy)||1;
       resolvePlayerPosition(p,vx/len*112,vy/len*112);p.dashCooldown=1.35;p.dashTimer=.17;p.energy-=22;
     }
     const speedFactor=(p.speedBoostTimer>0?1.65:1)*(p.dashTimer>0?1.5:1);
