@@ -73,7 +73,7 @@ function makeFighter(classId,hex,withLabel=true){
   add(root,new THREE.PlaneGeometry(1.2,.11),new THREE.MeshBasicMaterial({color:"#07111b",side:THREE.DoubleSide}),0,2.77,0).rotation.x=-Math.PI/2;
   const barFill=add(root,new THREE.PlaneGeometry(1.08,.055),new THREE.MeshBasicMaterial({color:"#c5ff67",side:THREE.DoubleSide}),0,2.785,0);barFill.rotation.x=-Math.PI/2;
   const label=withLabel?makeTextSprite("FIGHTER",hex||"#53eedc"):null;if(label){label.position.set(0,3.12,0);root.add(label);}
-  return {root,body,leftArm,rightArm,leftLeg,rightLeg,shield,ultimateRing,boostRing,respawnRing,teamRing,barFill,label,drones,lastX:null,lastZ:null,phase:Math.random()*6,tint,groundRing};
+  return {root,body,leftArm,rightArm,leftLeg,rightLeg,shield,ultimateRing,boostRing,respawnRing,teamRing,barFill,label,drones,lastX:null,lastZ:null,phase:Math.random()*6,tint,groundRing,classId,colorHex:hex||DEFAULT_COLORS[0]};
 }
 function disposeTree(obj){if(!obj)return;obj.traverse(n=>{if(n.geometry)n.geometry.dispose();if(n.material){const mats=Array.isArray(n.material)?n.material:[n.material];mats.forEach(m=>{if(m.map)m.map.dispose();m.dispose();});}});}
 function makeBlock(parent,x,y,w,d,tint){
@@ -122,7 +122,7 @@ function createArena(canvas){
     resize();
     if(window.ResizeObserver)new ResizeObserver(resize).observe(stage);else window.addEventListener("resize",resize);
     function buildWorld(mapKey,mode){
-      if(world){scene.remove(world);disposeTree(world);}
+      if(world){scene.remove(world);disposeTree(world);fighters.clear();}
       world=new THREE.Group();scene.add(world);
       const cfg=MAPS[mapKey]||MAPS.neon;scene.background=color(cfg.bg);
       const floor=add(world,new THREE.PlaneGeometry(25.1,15.85),new THREE.MeshStandardMaterial({color:cfg.bg,roughness:.86,metalness:.22}),0,-.12,0);floor.rotation.x=-Math.PI/2;
@@ -146,7 +146,7 @@ function createArena(canvas){
       const people=Object.values(state.players||{}),alive=new Set(people.map(p=>p.id));
       for(const [id,r] of fighters){if(!alive.has(id)){world.remove(r.root);disposeTree(r.root);fighters.delete(id);}}
       people.forEach((p)=>{
-        let r=fighters.get(p.id);if(!r){r=makeFighter(p.classId,p.color,true);world.add(r.root);fighters.set(p.id,r);}
+        let r=fighters.get(p.id);if(r&&(r.classId!==(p.classId||"striker")||r.colorHex!==(p.color||DEFAULT_COLORS[0]))){world.remove(r.root);disposeTree(r.root);fighters.delete(p.id);r=null;}if(!r){r=makeFighter(p.classId||"striker",p.color,true);world.add(r.root);fighters.set(p.id,r);}
         if(p.disconnected){r.root.visible=false;return;}
         const x=(p.x-600)/50,z=(p.y-380)/50,dx=r.lastX===null?0:p.x-r.lastX,dz=r.lastZ===null?0:p.y-r.lastZ,walk=clamp(Math.hypot(dx,dz)/4.2,0,1);
         r.lastX=p.x;r.lastZ=p.y;r.root.visible=true;r.body.visible=p.hp>0&&p.respawn<=0;
