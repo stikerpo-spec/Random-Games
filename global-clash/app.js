@@ -288,8 +288,8 @@ function renderShop(){
     const price=document.createElement("span");price.className="shop-price";price.textContent=owned?(equipped?"EQUIPPED":"UNLOCKED"):(skin.cost+" ◈");
     const action=document.createElement("button");action.className="btn "+(owned?"btn-outline":"btn-primary");action.textContent=equipped?"ACTIVE":owned?"EQUIP":"UNLOCK";action.disabled=equipped;
     action.addEventListener("click",()=>{
-      if(owned){profile.skin=skin.id;save();renderShop();renderLoadout();toast("STYLE EQUIPPED");}
-      else if(profile.coins>=skin.cost){profile.coins-=skin.cost;profile.owned.push(skin.id);profile.skin=skin.id;save();renderShop();renderLoadout();toast("COSMETIC UNLOCKED");}
+      if(owned){profile.skin=skin.id;$("customSkinName").dataset.dirty="";save();renderShop();renderLoadout();toast("STYLE EQUIPPED");}
+      else if(profile.coins>=skin.cost){profile.coins-=skin.cost;profile.owned.push(skin.id);profile.skin=skin.id;$("customSkinName").dataset.dirty="";save();renderShop();renderLoadout();toast("COSMETIC UNLOCKED");}
       else toast("NOT ENOUGH COINS");
     });
     foot.append(price,action);card.append(preview,title,desc,foot);list.append(card);
