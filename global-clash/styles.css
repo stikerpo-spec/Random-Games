@@ -80,3 +80,15 @@ body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;bac
   .touch-actions button{width:35px;height:35px;font-size:6px}
   .skin-palette-row{gap:8px}
 }
+
+/* Pointer-lock mouse look and Escape pause menu */
+.arena-stage.pointer-locked,.arena-stage.pointer-locked *{cursor:none!important}
+.arena-stage.pointer-locked .arena-reticle{left:50%!important;top:50%!important;transform:translate(-50%,-50%)}
+.game-pause-overlay{position:absolute;inset:0;z-index:20;display:grid;place-items:center;padding:18px;background:rgba(3,8,15,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.pause-panel{width:min(420px,94%);padding:30px 28px 25px;border:1px solid #4b6876;border-radius:9px;background:linear-gradient(145deg,#132535f5,#09131ef5);box-shadow:0 24px 90px #000b;text-align:center}
+.pause-panel h2{margin:11px 0 12px;font:900 clamp(38px,6vw,58px)/.9 var(--display);letter-spacing:.025em;color:#eafaff}
+.pause-panel p{max-width:330px;margin:0 auto 20px;color:#a4b8c4;font-size:11px;line-height:1.75}
+.pause-panel .btn{display:flex;width:100%;justify-content:center;margin-top:9px}
+.pause-panel small{display:block;margin-top:19px;color:#7e98a6;font:8px var(--mono);letter-spacing:.16em}
+.arena-reticle{transition:opacity .12s}
+@media(max-width:720px){.pause-panel{padding:23px 18px}.pause-panel h2{font-size:42px}}
