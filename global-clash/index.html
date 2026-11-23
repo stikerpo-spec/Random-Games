@@ -256,7 +256,8 @@
     <div class="game-main">
       <div class="arena-stage">
         <canvas id="arenaCanvas" width="1200" height="760" aria-label="3D-Neon-Arena"></canvas>
-        <div class="render-badge">3D ENGINE <i></i> WEBGL</div>
+        <div class="render-badge">THIRD-PERSON VIEW <i></i> LIVE 3D</div>
+        <div class="arena-reticle" id="arenaReticle" aria-hidden="true"><i></i><b></b></div>
         <div class="game-overlay hidden" id="gameEndOverlay"><div class="end-card"><div class="eyebrow">MATCH COMPLETE</div><h2 id="endTitle">VICTORY</h2><p id="endMessage">Well played.</p><div class="end-rewards" id="endRewards"></div><div class="end-actions"><button class="btn btn-primary" id="rematchButton">REMATCH ↻</button><button class="btn btn-outline" id="endToMenu">BACK TO BASE</button></div></div></div>
         <div class="touch-controls" id="touchControls"><div class="touch-pad"><button data-key="w">▲</button><button data-key="a">◀</button><button data-key="s">▼</button><button data-key="d">▶</button></div><div class="touch-actions"><button data-key=" " class="dash-touch">DASH</button><button data-key="e">SHIELD</button><button data-key="j" class="pulse-touch">PULSE</button><button data-key="q" class="ultimate-touch">ULT</button></div></div>
       </div>
@@ -264,7 +265,7 @@
         <div class="sidebar-panel"><div class="sidebar-label">LIVE SCOREBOARD</div><div id="scoreboard" class="scoreboard"></div></div>
         <div class="sidebar-panel"><div class="sidebar-label">FIGHTER STATUS</div><div id="fighterStatus" class="fighter-status"></div></div>
         <div class="sidebar-panel"><div class="sidebar-label">ARENA FEED</div><div id="arenaFeed" class="arena-feed"></div></div>
-        <div class="game-controls"><b>WASD</b> MOVE<br><b>J / CLICK</b> PULSE<br><b>SPACE</b> DASH · <b>E</b> SHIELD · <b>Q</b> ULTIMATE</div>
+        <div class="game-controls"><b>WASD</b> MOVE RELATIVE TO CAMERA<br><b>MOUSE</b> AIM / LOOK · <b>CLICK</b> PULSE<br><b>SPACE</b> DASH · <b>E</b> SHIELD · <b>Q</b> ULTIMATE</div>
       </aside>
     </div>
   </section>
