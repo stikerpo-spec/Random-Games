@@ -1,0 +1,45 @@
+name: Email Global Clash update subscribers
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      title:
+        description: Update title
+        required: true
+        type: string
+      notes:
+        description: What changed in this update
+        required: true
+        type: string
+      update_url:
+        description: Optional link to release details
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: global-clash-update-emails-${{ github.event.release.id || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  send-update-emails:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Send email to confirmed subscribers
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          GLOBAL_CLASH_FROM: ${{ secrets.GLOBAL_CLASH_FROM }}
+          GLOBAL_CLASH_SITE_URL: https://stikerpo-spec.github.io/Random-Games/global-clash/
+          UPDATE_TITLE: ${{ github.event.release.name || inputs.title || github.ref_name }}
+          UPDATE_NOTES: ${{ github.event.release.body || inputs.notes || 'A new GLOBAL CLASH release is available.' }}
+          UPDATE_URL: ${{ github.event.release.html_url || inputs.update_url || 'https://github.com/stikerpo-spec/Random-Games/releases' }}
+        run: node scripts/send-global-clash-update-emails.mjs
