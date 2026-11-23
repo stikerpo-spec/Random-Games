@@ -271,6 +271,7 @@ function renderRoster(){
   $("roomStatus").textContent=lobbyPlayers.length+" / "+MODES[selectedMode].limit+" CONNECTED";
 }
 function createRoom(){
+  if(!window.Peer){setLobbyError("PeerJS could not be loaded. Check your internet connection.");return;}
   disconnectNetwork();role="host";roomCode=makeRoomCode();myId="p1";
   lobbyPlayers=[makeRosterPlayer("p1",profile.name,profile.classId,0)];
   setLobbyError("Connecting to the peer network …");
@@ -312,6 +313,7 @@ function sendRoster(){
   renderRoster();
 }
 function joinRoom(){
+  if(!window.Peer){setLobbyError("PeerJS could not be loaded. Check your internet connection.");return;}
   const code=String($("joinCode").value||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6);
   if(code.length!==6){setLobbyError("Enter a valid six-character room code.");return;}
   disconnectNetwork();role="guest";roomCode=code;
