@@ -46,6 +46,13 @@ function makeFighter(classId,hex,skinSpec="standard",withLabel=true){
   const leftArm=arm(-1),rightArm=arm(1);
   const leg=side=>{const pivot=new THREE.Group();pivot.position.set(side*.205,.88,0);body.add(pivot);add(pivot,capsuleGeometry(.17,.49),mainDark,0,-.31,0);add(pivot,new THREE.BoxGeometry(.31,.19,.48),main,0,-.65,.12);add(pivot,new THREE.BoxGeometry(.28,.075,.24),silver,0,-.56,.28);add(pivot,new THREE.BoxGeometry(.13,.05,.04),bright,0,-.23,.17);return pivot;};
   const leftLeg=leg(-1),rightLeg=leg(1),extras=new THREE.Group();body.add(extras);
+  const backpack=add(body,new THREE.BoxGeometry(.48,.62,.28),mainDark,0,1.32,-.47);
+  add(body,new THREE.BoxGeometry(.3,.12,.04),bright,0,1.42,-.625);
+  const pulseCaster=new THREE.Group();pulseCaster.position.set(.62,1.02,.2);body.add(pulseCaster);
+  add(pulseCaster,new THREE.BoxGeometry(.2,.2,.42),mainDark,0,0,.12);
+  add(pulseCaster,new THREE.BoxGeometry(.24,.07,.18),silver,0,.11,.12);
+  add(pulseCaster,new THREE.CylinderGeometry(.075,.12,.22,8),bright,0,0,.43).rotation.x=Math.PI/2;
+  add(pulseCaster,new THREE.TorusGeometry(.13,.025,6,18),bright,0,0,.38).rotation.x=Math.PI/2;
   let drones=[];
   if(classId==="guardian"){
     body.scale.x=1.12;
@@ -205,11 +212,11 @@ function createArena(canvas){
       people.forEach((p)=>{
         let r=fighters.get(p.id);if(r&&(r.classId!==(p.classId||"striker")||r.skinId!==(p.skinId||"standard")||r.colorHex!==(p.color||DEFAULT_COLORS[0]))){world.remove(r.root);disposeTree(r.root);fighters.delete(p.id);r=null;}if(!r){r=makeFighter(p.classId||"striker",p.color,p.skinData||p.skinId||"standard",true);world.add(r.root);fighters.set(p.id,r);}
         if(p.disconnected){r.root.visible=false;return;}
-        const x=(p.x-600)/50,z=(p.y-380)/50,dx=r.lastX===null?0:p.x-r.lastX,dz=r.lastZ===null?0:p.y-r.lastZ,walk=clamp(Math.hypot(dx,dz)/4.2,0,1);
+        const x=(p.x-600)/50,z=(p.y-380)/50,dx=r.lastX===null?0:p.x-r.lastX,dz=r.lastZ===null?0:p.y-r.lastZ,walk=clamp(Math.hypot(dx,dz)/4.2,0,1),sprinting=!!(p.input&&p.input.sprint);
         r.lastX=p.x;r.lastZ=p.y;r.root.visible=true;r.body.visible=p.hp>0&&p.respawn<=0;
-        r.root.position.set(x,.025+Math.abs(Math.sin(time*8+r.phase))*.035*walk,z);r.root.rotation.y=Math.PI/2-(p.angle||0);
-        const swing=Math.sin(time*12+r.phase)*walk*.62;
-        r.leftLeg.rotation.x=swing;r.rightLeg.rotation.x=-swing;r.leftArm.rotation.x=-swing*.78;r.rightArm.rotation.x=swing*.78;r.body.rotation.z=walk*Math.sin(time*12+r.phase)*.035;
+        const gait=sprinting?16:12;r.root.position.set(x,.025+Math.abs(Math.sin(time*gait*.66+r.phase))*(sprinting?.095:.055)*walk,z);r.root.rotation.y=Math.PI/2-(p.angle||0);
+        const swing=Math.sin(time*gait+r.phase)*walk*(sprinting?.82:.62);
+        r.leftLeg.rotation.x=swing;r.rightLeg.rotation.x=-swing;r.leftArm.rotation.x=-swing*.78;r.rightArm.rotation.x=swing*.78;r.body.rotation.z=walk*Math.sin(time*gait+r.phase)*.035+(sprinting?.025:0);
         r.teamRing.material.color.set(p.team==="B"?"#ff6688":"#53eedc");
         r.shield.visible=(p.shieldTimer||0)>0;r.shield.material.opacity=.12+.08*Math.sin(time*9);
         r.ultimateRing.visible=(p.ultimate||0)>=99;r.ultimateRing.rotation.z=time*.65;
@@ -242,8 +249,9 @@ function createArena(canvas){
       if(!p)return;
       const angle=p.angle||0,fx=Math.cos(angle),fz=Math.sin(angle),sx=-fz,sz=fx;
       const px=(p.x-600)/50,pz=(p.y-380)/50;
-      desiredCamera.set(px-fx*6.3+sx*.88,5.15,pz-fz*6.3+sz*.88);
+      desiredCamera.set(px-fx*6.3+sx*.88,p.input&&p.input.sprint?5.35:5.15,pz-fz*6.3+sz*.88);
       desiredLook.set(px+fx*2.8,1.35,pz+fz*2.8);
+      const targetFov=p.input&&p.input.sprint?58:54;camera.fov+=(targetFov-camera.fov)*.12;camera.updateProjectionMatrix();
       if(!cameraReady){camera.position.copy(desiredCamera);lookTarget.copy(desiredLook);cameraReady=true;}
       else{const smooth=1-Math.exp(-8/60);camera.position.lerp(desiredCamera,smooth);lookTarget.lerp(desiredLook,smooth);}
       camera.lookAt(lookTarget);
