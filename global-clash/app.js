@@ -25,6 +25,7 @@ const MAPS = {
 };
 const MODES = {
   training:{name:"Training Lab",kind:"solo",limit:2,seconds:150,desc:"Practice against a training bot."},
+  tournament:{name:"Tournament Circuit",kind:"solo",limit:2,seconds:90,desc:"Beat three challengers in a row."},
   survival:{name:"Survival",kind:"solo",limit:4,seconds:180,desc:"Survive as many waves as you can."},
   duel:{name:"Duel",kind:"online",limit:2,seconds:120,desc:"A private 1v1, first to five."},
   teams:{name:"Team Clash",kind:"online",limit:4,seconds:150,desc:"Two teams, four fighters, one objective."},
@@ -357,6 +358,7 @@ function createGame(players,mode,map,online){
     while(list.length<4){const i=list.length;list.push(makeRosterPlayer("bot"+(i+1),"ARENA BOT "+(i-1),"guardian",i,true));}
   }
   if(mode==="training"&&list.length<2)list.push(makeRosterPlayer("bot1","TRAINING BOT","runner",1,true));
+  if(mode==="tournament"&&list.length<2)list.push(makeRosterPlayer("bot1","ROUND 1 CHALLENGER","guardian",1,true));
   if(mode==="survival"&&list.length<4){while(list.length<4){const i=list.length;list.push(makeRosterPlayer("bot"+i,"WAVE BOT "+i,i%2?"runner":"guardian",i,true));}}
   if(mode==="king"&&list.length<3){while(list.length<3){const i=list.length;list.push(makeRosterPlayer("bot"+i,"ZONE BOT "+i,"technician",i,true));}}
   list.slice(0,4).forEach((item,i)=>{
@@ -366,7 +368,7 @@ function createGame(players,mode,map,online){
       score:0,kos:0,deaths:0,angle:0,attackCooldown:0,dashCooldown:0,dashTimer:0,shieldTimer:0,respawn:0,
       input:cleanInput({aimX:600,aimY:380}),isBot:!!item.isBot,disconnected:false};
   });
-  return {id:"m"+Date.now()+Math.random().toString(36).slice(2,7),mode,map,online,phase:"playing",time:MODES[mode].seconds,elapsed:0,players:people,bullets:[],objective:{A:0,B:0},wave:1,spawnTimer:0,feed:[]};
+  return {id:"m"+Date.now()+Math.random().toString(36).slice(2,7),mode,map,online,phase:"playing",time:MODES[mode].seconds,elapsed:0,tournamentRound:1,players:people,bullets:[],objective:{A:0,B:0},wave:1,spawnTimer:0,feed:[]};
 }
 function startSolo(mode){
   disconnectNetwork();role="solo";roomCode="";myId="p1";
@@ -510,9 +512,30 @@ function updateHost(dt){
     if(consumed||b.life<=0||b.x<0||b.x>1200||b.y<0||b.y>760)game.bullets.splice(i,1);
   }
   updateObjective(dt);
-  const people=Object.values(game.players).filter(p=>!p.isBot&&!p.disconnected);
-  const bots=Object.values(game.players).filter(p=>p.isBot&&!p.disconnected);
-  if(game.phase==="playing"){
+  if(game.phase==="playing"&&game.mode==="tournament"){
+    const player=game.players.p1;
+    const rival=Object.values(game.players).find(p=>p.id!=="p1"&&!p.disconnected);
+    if(player&&rival&&(player.score>=5||rival.score>=5||game.time<=0)){
+      if(player.score>rival.score){
+        if(game.tournamentRound>=3){
+          game.phase="ended";game.winner={id:"p1",name:player.name,score:player.score};
+        }else{
+          game.tournamentRound++;
+          const nextClass=["runner","technician","guardian"][game.tournamentRound-1];
+          const stats=classStats(nextClass);
+          rival.name=["","SEMI-FINAL CHALLENGER","FINAL CHALLENGER"][game.tournamentRound-1];
+          rival.classId=nextClass;rival.maxHp=stats.maxHp;rival.hp=stats.maxHp;rival.maxEnergy=stats.maxEnergy;rival.energy=stats.maxEnergy;
+          rival.speed=stats.speed;rival.regen=stats.regen;rival.shieldScale=stats.shield;
+          player.score=0;player.kos=0;player.hp=player.maxHp;player.energy=player.maxEnergy;player.x=180;player.y=380;
+          rival.score=0;rival.kos=0;rival.deaths=0;rival.respawn=0;rival.x=1020;rival.y=380;
+          game.bullets=[];game.elapsed=0;game.time=MODES.tournament.seconds;
+          pushHostFeed("» ROUND "+(game.tournamentRound-1)+" CLEARED · NEXT CHALLENGER");
+        }
+      }else{
+        game.phase="ended";game.winner={id:rival.id,name:rival.name,score:rival.score};
+      }
+    }
+  }else if(game.phase==="playing"){
     if(["duel","ffa","training"].includes(game.mode)){
       const leader=Object.values(game.players).filter(p=>!p.disconnected).sort((a,b)=>b.score-a.score)[0];
       if(game.mode!=="training"&&leader&&leader.score>=5){game.phase="ended";game.winner={id:leader.id,name:leader.name,score:leader.score};}
