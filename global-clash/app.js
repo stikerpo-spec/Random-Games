@@ -15,7 +15,11 @@ const SKINS = [
   {id:"rose",name:"PULSE ROSE",cost:400,color:"#ff6688",desc:"A bold pink energy trail."},
   {id:"violet",name:"NIGHT SHIFT",cost:550,color:"#ad91ff",desc:"Deep violet radiance."},
   {id:"solar",name:"SOLAR FLARE",cost:800,color:"#ffbd67",desc:"A warm golden glow."},
-  {id:"ice",name:"GLACIER",cost:1000,color:"#9bdcff",desc:"Cool blue visual effects."}
+  {id:"ice",name:"GLACIER",cost:1000,color:"#9bdcff",desc:"Frosted crystal armour and ice-blue accents."},
+  {id:"storm",name:"STORM RIDER",cost:1250,color:"#7dcbff",desc:"Electric shoulder coils and a charged helmet crest."},
+  {id:"ember",name:"EMBER TITAN",cost:1500,color:"#ff8b56",desc:"Heat-forged shoulder plates and glowing orange armour."},
+  {id:"phantom",name:"PHANTOM",cost:1800,color:"#b7a1ff",desc:"Dark stealth plating, a halo and violet energy details."},
+  {id:"tide",name:"TIDAL WAVE",cost:2100,color:"#56e5df",desc:"Flowing fin armour and a bright ocean visor."}
 ];
 const MAPS = {
   neon:{name:"Neon Harbor",bg:"#0b1723",grid:"#53eedc",accent:"#c5ff67",blocks:[[330,205,95,34],[775,205,95,34],[330,520,95,34],[775,520,95,34]]},
@@ -276,8 +280,10 @@ function disconnectNetwork(){
   try{if(peer&&!peer.destroyed)peer.destroy();}catch(e){}
   peer=null;
 }
-function makeRosterPlayer(id,name,classId,index,isBot=false){
-  return {id,name:cleanName(name),classId:CLASS[classId]?classId:"striker",color:COLORS[index%COLORS.length],isBot};
+function makeRosterPlayer(id,name,classId,index,isBot=false,skinId){
+  const chosenId=(id==="p1"&&!isBot)?profile.skin:(skinId||"standard");
+  const skin=SKINS.find(item=>item.id===chosenId)||SKINS[0];
+  return {id,name:cleanName(name),classId:CLASS[classId]?classId:"striker",skinId:skin.id,color:skin.color,isBot};
 }
 function cleanName(name){return String(name||"PLAYER").replace(/[^A-Za-z0-9ÄÖÜäöüß _-]/g,"").trim().slice(0,14)||"PLAYER";}
 function renderRoster(){
