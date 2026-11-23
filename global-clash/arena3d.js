@@ -179,7 +179,7 @@ function createArena(canvas){
     const desiredCamera=new THREE.Vector3(),desiredLook=new THREE.Vector3(),lookTarget=new THREE.Vector3(0,1.3,0);
     const aimPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0),raycaster=new THREE.Raycaster(),ndc=new THREE.Vector2();
     let cameraReady=false,followedPlayerId=null,viewYaw=0,viewPitch=.28,pointerLocked=false;
-    const LOOK_SENSITIVITY=.00235;
+    let lookSensitivity=.00235,invertLookY=false;
     let cameraDistance=7.2;
     function isPointerLocked(){return document.pointerLockElement===canvas;}
     function requestPointerLock(){
@@ -190,8 +190,8 @@ function createArena(canvas){
     function exitPointerLock(){if(document.pointerLockElement===canvas&&document.exitPointerLock)document.exitPointerLock();}
     function lookBy(dx,dy){
       if(!Number.isFinite(dx)||!Number.isFinite(dy))return;
-      viewYaw+=dx*LOOK_SENSITIVITY;
-      viewPitch=clamp(viewPitch+dy*LOOK_SENSITIVITY*.78,-.12,.72);
+      viewYaw+=dx*lookSensitivity;
+      viewPitch=clamp(viewPitch+dy*lookSensitivity*.78*(invertLookY?-1:1),-.12,.72);
     }
     function aimFromScreen(x,y){
       ndc.set(x,y);raycaster.setFromCamera(ndc,camera);
@@ -207,6 +207,7 @@ function createArena(canvas){
     }
     function getAimPoint(){return aimFromScreen(0,0);}
     function zoomCamera(delta){if(!Number.isFinite(delta))return;cameraDistance=clamp(cameraDistance+(delta>0?.55:-.55),4.8,11.5);}
+    function setLookSettings(settings={}){const value=Number(settings.sensitivity);lookSensitivity=.00235*clamp(Number.isFinite(value)?value:1,.5,2.5);invertLookY=settings.invertY===true;}
     function onPointerLockChange(){pointerLocked=isPointerLocked();stage.classList.toggle("pointer-locked",pointerLocked);}
     document.addEventListener("pointerlockchange",onPointerLockChange);
     document.addEventListener("pointerlockerror",()=>{pointerLocked=false;stage.classList.remove("pointer-locked");});
@@ -300,7 +301,7 @@ function createArena(canvas){
       renderer.render(scene,camera);
     }
     function pointerToGame(clientX,clientY,rect){return aimFromScreen(((clientX-rect.left)/rect.width)*2-1,-(((clientY-rect.top)/rect.height)*2-1));}
-    return {update,resize,renderer,pointerToGame,getAimPoint,look:lookBy,zoom:zoomCamera,requestPointerLock,exitPointerLock,isPointerLocked,dispose(){exitPointerLock();document.removeEventListener("pointerlockchange",onPointerLockChange);renderer.dispose();renderer.domElement.remove();canvas.classList.remove("legacy-arena-canvas");stage.classList.remove("pointer-locked");}};
+    return {update,resize,renderer,pointerToGame,getAimPoint,look:lookBy,zoom:zoomCamera,setLookSettings,requestPointerLock,exitPointerLock,isPointerLocked,dispose(){exitPointerLock();document.removeEventListener("pointerlockchange",onPointerLockChange);renderer.dispose();renderer.domElement.remove();canvas.classList.remove("legacy-arena-canvas");stage.classList.remove("pointer-locked");}};
   }catch(error){console.warn("GLOBAL CLASH 3D renderer unavailable; using 2D fallback.",error);return null;}
 }
 
