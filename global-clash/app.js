@@ -55,7 +55,7 @@ function loadProfile(){
 let profile=loadProfile();
 let selectedMode="training",selectedMap="neon";
 let peer=null,hostConn=null,connections=[],role="",roomCode="",myId="",lobbyPlayers=[],game=null;
-let keys={},mouse={x:600,y:380},pointerDown=false,lastFrame=performance.now(),lastSend=0,lastInput=0,feedItems=[],endHandled=false;
+let keys={},mouse={x:600,y:380},pointerDown=false,lastFrame=performance.now(),lastSend=0,lastInput=0,lastHudUpdate=0,feedItems=[],endHandled=false;
 let audioContext=null,soundEnabled=true;
 try{soundEnabled=localStorage.getItem("globalClashSfx")!=="off";}catch(e){}
 function playSfx(kind){
@@ -821,8 +821,11 @@ function frame(now){
     if(role==="solo"||role==="host")updateHost(dt);
     else if(role==="guest"&&now-lastInput>40){sendHost({type:"input",input:getInput()});lastInput=now;}
   }
-  if(game&&role==="host"&&now-lastSend>75){sendAll({type:"state",state:game});lastSend=now;}
-  if(game&&$("gameScreen").classList.contains("open"))renderGame();
+  if(game&&role==="host"&&now-lastSend>45){sendAll({type:"state",state:game});lastSend=now;}
+  if(game&&$("gameScreen").classList.contains("open")){
+    if(now-lastHudUpdate>120){renderGame();lastHudUpdate=now;}
+    else drawArena();
+  }
   requestAnimationFrame(frame);
 }
 dailyReset();attachEvents();renderModeSelection();renderAll();renderLoadout();requestAnimationFrame(frame);
